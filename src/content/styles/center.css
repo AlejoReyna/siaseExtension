@@ -718,6 +718,11 @@ body.siase-plus-career-landing > br {
   box-shadow: 0 16px 42px rgba(15, 23, 42, 0.08);
 }
 
+.siase-career-siase-mode .siase-career-dashboard {
+  grid-template-rows: minmax(0, 1fr);
+  border: 0;
+}
+
 body.siase-plus-career-landing > .siase-career-dashboard {
   max-width: none !important;
   margin: 0 !important;
@@ -735,6 +740,10 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   border-bottom: 1px solid var(--border-color);
   border-radius: 0;
   box-shadow: none;
+}
+
+.siase-career-siase-mode .siase-career-nav {
+  display: none;
 }
 
 .siase-career-brand,
@@ -819,6 +828,11 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   margin-top: 0;
 }
 
+.siase-career-siase-mode .siase-career-grid {
+  grid-template-columns: minmax(0, 1fr);
+  height: 100%;
+}
+
 .siase-career-main,
 .siase-career-sidebar {
   display: grid;
@@ -831,12 +845,20 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   height: 100%;
 }
 
+.siase-career-siase-mode .siase-career-main {
+  overflow: hidden;
+}
+
 .siase-career-sidebar {
   grid-auto-rows: max-content;
   height: 100%;
   overflow-y: auto;
   margin-left: -1px;
   padding-right: 0;
+}
+
+.siase-career-siase-mode .siase-career-sidebar {
+  display: none;
 }
 
 .siase-career-system-sidebar {
@@ -852,6 +874,31 @@ body.siase-plus-career-landing > .siase-career-dashboard {
 .siase-career-main {
   overflow-y: auto;
   padding-right: 0;
+}
+
+.siase-career-content-host {
+  display: none;
+}
+
+.siase-career-siase-mode .siase-career-content-host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--surface-color);
+}
+
+.siase-career-content-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--surface-color);
+  border: 0;
+}
+
+.siase-career-siase-mode .siase-nexus-widget {
+  display: none;
 }
 
 .siase-career-hero {
@@ -1068,6 +1115,8 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   grid-template-columns: 1fr;
   gap: 12px;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .siase-career-quick-panel .siase-career-quick-card {
@@ -1105,6 +1154,40 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   color: #ffffff;
   background: transparent;
   border-radius: 12px;
+}
+
+.siase-career-quick-panel--sidebar .siase-career-menu-card {
+  min-height: 50px;
+  border-color: transparent;
+}
+
+.siase-career-quick-panel--sidebar .siase-career-menu-card.is-active,
+.siase-career-quick-panel--sidebar .siase-career-menu-card:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.siase-career-quick-panel--sidebar .siase-career-menu-card--academic {
+  border-left: 3px solid #60a5fa;
+}
+
+.siase-career-quick-panel--sidebar .siase-career-menu-card--schedule {
+  border-left: 3px solid #fb7185;
+}
+
+.siase-career-quick-panel--sidebar .siase-career-menu-card--payments {
+  border-left: 3px solid #fbbf24;
+}
+
+.siase-career-quick-panel--sidebar .siase-career-menu-card--services {
+  border-left: 3px solid #a78bfa;
+}
+
+.siase-career-quick-panel--sidebar .siase-career-menu-card--profile {
+  border-left: 3px solid #34d399;
+}
+
+.siase-career-quick-panel--sidebar .siase-career-menu-card--other {
+  border-left: 3px solid rgba(255, 255, 255, 0.4);
 }
 
 .siase-career-quick-panel--sidebar .siase-career-quick-card strong {

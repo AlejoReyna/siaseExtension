@@ -3,10 +3,13 @@ import type {
   NexusApiResponseMessage,
   NexusPortalRequestMessage
 } from '@/types/chrome-messages';
+import type { MenuItem } from '@/types/menu';
+import { parseMenuItems } from '@/utils/parser/menu';
 import { applyStoredTheme } from './theme';
 
 const PANEL_IDS = ['siase', 'correo', 'nexus', 'codice'] as const;
 type PanelId = (typeof PANEL_IDS)[number];
+const SIASE_CONTENT_FRAME_NAME = 'siase-career-content-frame';
 
 const NEXUS_API_BASE = 'https://api.nexus.uanl.mx/WebApi';
 const NEXUS_CACHE_KEY = 'siase_nexus_widget_cache';
@@ -116,6 +119,7 @@ class NexusAuthError extends Error {
 
 function iconMarkup(name: string): string {
   const icons: Record<string, string> = {
+    badge: '<path d="M8.6 14.2 11 16.6l4.8-5.2"/><path d="m12 2 2.4 2.1 3.2-.3.7 3.1 2.7 1.7-1.3 2.9 1.3 2.9-2.7 1.7-.7 3.1-3.2-.3L12 22l-2.4-2.1-3.2.3-.7-3.1L3 15.4l1.3-2.9L3 9.6l2.7-1.7.7-3.1 3.2.3L12 2Z"/>',
     book: '<path d="M4 19.5V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-1.5Z"/><path d="M8 7h6M8 11h8"/>',
     calendar:
       '<path d="M7 3v4M17 3v4M4 9h16"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 13h.01M12 13h.01M16 13h.01"/>',
@@ -124,10 +128,12 @@ function iconMarkup(name: string): string {
     mail: '<path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/>',
     message: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/>',
     logout: '<path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 19V5a2 2 0 0 0-2-2h-6M13 21h6a2 2 0 0 0 2-2"/>',
+    receipt: '<path d="M6 3h12v18l-2-1-2 1-2-1-2 1-2-1-2 1V3Z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
     services:
       '<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/><path d="m3 18 9 5 9-5"/>',
     shield: '<path d="M12 3 5 6v5c0 4.4 2.8 8.3 7 10 4.2-1.7 7-5.6 7-10V6l-7-3Z"/><path d="m8 12 3 3 5-6"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     video: '<path d="M15 10 21 6v12l-6-4"/><rect x="3" y="6" width="12" height="12" rx="2"/>'
   };
 
@@ -1331,6 +1337,42 @@ function findCareerCount(frameDocument: Document): number {
   return getCareerLinks(frameDocument).length;
 }
 
+function menuIconName(item: Pick<MenuItem, 'label' | 'category'>): string {
+  const normalized = item.label.toLowerCase();
+  if (/horario|clase/.test(normalized)) return 'calendar';
+  if (/calif|kardex|materia|acad|promedio|avance/.test(normalized)) return 'book';
+  if (/recibo|cuota|pago|adeudo|beca|finanza/.test(normalized)) return 'receipt';
+  if (/dato|personal|perfil|foto|situaci|estatus/.test(normalized)) return 'user';
+  if (/inscrip|tramite|solicitud|constancia|servicio|voluntariado/.test(normalized))
+    return 'badge';
+  if (item.category === 'schedule') return 'calendar';
+  if (item.category === 'payments') return 'receipt';
+  if (item.category === 'profile') return 'user';
+  if (item.category === 'services') return 'badge';
+  return 'services';
+}
+
+function ensureSiaseContentFrame(wrapper: HTMLElement): HTMLIFrameElement | null {
+  const host = wrapper.querySelector<HTMLElement>('[data-siase-career-content-host]');
+  if (!host) return null;
+
+  let frame = host.querySelector<HTMLIFrameElement>(`iframe[name="${SIASE_CONTENT_FRAME_NAME}"]`);
+  if (frame) return frame;
+
+  frame = host.ownerDocument.createElement('iframe');
+  frame.className = 'siase-career-content-frame';
+  frame.name = SIASE_CONTENT_FRAME_NAME;
+  frame.title = 'Contenido de SIASE';
+  frame.addEventListener('load', () => handleSiaseFrameLoad(wrapper, frame));
+  host.replaceChildren(frame);
+  return frame;
+}
+
+function setSiaseMode(wrapper: HTMLElement): void {
+  wrapper.ownerDocument.body.classList.add('siase-career-siase-mode');
+  wrapper.classList.add('is-siase-mode');
+}
+
 function getCareerForm(frameDocument: Document): HTMLFormElement | null {
   return frameDocument.querySelector<HTMLFormElement>("form[name='SelCarrera']");
 }
@@ -1346,7 +1388,11 @@ function setCareerFormValue(form: HTMLFormElement, name: string, value: string):
   }
 }
 
-function applyLegacyCareerHref(frameDocument: Document, careerLink: HTMLAnchorElement): boolean {
+function applyLegacyCareerHref(
+  frameDocument: Document,
+  careerLink: HTMLAnchorElement,
+  wrapper: HTMLElement
+): boolean {
   const form = getCareerForm(frameDocument);
   const href = careerLink.getAttribute('href') ?? '';
   if (!form || !href.toLowerCase().startsWith('javascript:')) return false;
@@ -1364,15 +1410,20 @@ function applyLegacyCareerHref(frameDocument: Document, careerLink: HTMLAnchorEl
 
   if (!hasAssignments) return false;
 
+  const frame = ensureSiaseContentFrame(wrapper);
+  if (!frame) return false;
+
+  setSiaseMode(wrapper);
+  form.target = SIASE_CONTENT_FRAME_NAME;
   form.submit();
   return true;
 }
 
-function selectCareerByIndex(frameDocument: Document, index: number): boolean {
+function selectCareerByIndex(frameDocument: Document, wrapper: HTMLElement, index: number): boolean {
   const careerLink = getCareerLinks(frameDocument)[index];
   if (!careerLink) return false;
 
-  if (applyLegacyCareerHref(frameDocument, careerLink)) return true;
+  if (applyLegacyCareerHref(frameDocument, careerLink, wrapper)) return true;
   careerLink.click();
   return true;
 }
@@ -1388,6 +1439,110 @@ function openCareerListModal(wrapper: HTMLElement): void {
 function closeCareerListModal(wrapper: HTMLElement): void {
   const modal = wrapper.querySelector<HTMLElement>('[data-siase-career-modal]');
   if (modal) modal.hidden = true;
+}
+
+function getSiaseFrameDocument(frame: HTMLIFrameElement): Document | null {
+  try {
+    return frame.contentDocument;
+  } catch {
+    return null;
+  }
+}
+
+function getNamedFrameDocument(rootDocument: Document, name: string): Document | null {
+  const frame = rootDocument.querySelector<HTMLFrameElement>(`frame[name="${name}"]`);
+  try {
+    return frame?.contentDocument ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getSiaseCenterFrame(rootDocument: Document): HTMLFrameElement | null {
+  return rootDocument.querySelector<HTMLFrameElement>('frame[name="center"]');
+}
+
+function isolateSiaseCenterFrame(rootDocument: Document): void {
+  const topFrame = rootDocument.querySelector<HTMLFrameElement>('frame[name="top"]');
+  const leftFrame = rootDocument.querySelector<HTMLFrameElement>('frame[name="left"]');
+  const centerFrame = getSiaseCenterFrame(rootDocument);
+
+  [topFrame, leftFrame].forEach((frame) => {
+    frame?.setAttribute('scrolling', 'no');
+  });
+  centerFrame?.setAttribute('scrolling', 'yes');
+
+  const topFrameset = topFrame?.closest('frameset');
+  if (topFrameset?.hasAttribute('rows')) topFrameset.setAttribute('rows', '0,*');
+
+  const leftFrameset = leftFrame?.closest('frameset');
+  if (leftFrameset?.hasAttribute('cols')) leftFrameset.setAttribute('cols', '0,*');
+}
+
+function renderSiaseMenu(wrapper: HTMLElement, items: MenuItem[]): void {
+  const grid = wrapper.querySelector<HTMLElement>('[data-siase-career-rail-menu]');
+  if (!grid || !items.length) return;
+
+  grid.replaceChildren(
+    ...items.map((item) => {
+      const button = grid.ownerDocument.createElement('button');
+      button.type = 'button';
+      button.className = `siase-career-quick-card siase-career-menu-card siase-career-menu-card--${item.category}`;
+      button.dataset.siaseMenuHref = item.href;
+      button.title = item.label;
+      button.setAttribute('aria-label', item.label);
+
+      const icon = grid.ownerDocument.createElement('span');
+      icon.className = 'siase-career-quick-card__icon';
+      icon.innerHTML = iconMarkup(menuIconName(item));
+
+      const label = grid.ownerDocument.createElement('strong');
+      label.textContent = item.label;
+
+      button.append(icon, label);
+      return button;
+    })
+  );
+}
+
+function navigateSiaseCenter(wrapper: HTMLElement, href: string): void {
+  const frame = wrapper.querySelector<HTMLIFrameElement>(`iframe[name="${SIASE_CONTENT_FRAME_NAME}"]`);
+  const rootDocument = frame ? getSiaseFrameDocument(frame) : null;
+  const centerFrame = rootDocument ? getSiaseCenterFrame(rootDocument) : null;
+  if (!centerFrame) return;
+
+  centerFrame.src = href;
+  wrapper.querySelectorAll<HTMLElement>('[data-siase-menu-href]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.siaseMenuHref === href);
+  });
+}
+
+function hydrateSiaseShellFromFrame(wrapper: HTMLElement, frame: HTMLIFrameElement): boolean {
+  const rootDocument = getSiaseFrameDocument(frame);
+  if (!rootDocument) return false;
+
+  isolateSiaseCenterFrame(rootDocument);
+
+  const leftDocument = getNamedFrameDocument(rootDocument, 'left');
+  if (!leftDocument) return false;
+
+  const menuItems = parseMenuItems(leftDocument);
+  if (!menuItems.length) return false;
+
+  renderSiaseMenu(wrapper, menuItems);
+  return true;
+}
+
+function handleSiaseFrameLoad(wrapper: HTMLElement, frame: HTMLIFrameElement): void {
+  setSiaseMode(wrapper);
+
+  let attempts = 0;
+  const maxAttempts = 40;
+  const interval = window.setInterval(() => {
+    attempts += 1;
+    const hydrated = hydrateSiaseShellFromFrame(wrapper, frame);
+    if (hydrated || attempts >= maxAttempts) window.clearInterval(interval);
+  }, 250);
 }
 
 function showPanel(frameDocument: Document, panelId: PanelId): void {
@@ -1500,7 +1655,7 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     <div class="siase-career-grid">
       <aside class="siase-career-system-sidebar" aria-label="Acceso rapido del sistema">
         <section class="siase-career-section siase-career-quick-panel siase-career-quick-panel--sidebar siase-entrance">
-          <div class="siase-career-quick-grid">
+          <div class="siase-career-quick-grid" data-siase-career-rail-menu>
             <button type="button" data-siase-career-panel="siase" class="siase-career-quick-card is-active" aria-label="Mi carrera">
               <span class="siase-career-quick-card__icon siase-career-quick-card__icon--blue">${iconMarkup('book')}</span>
               <strong>Mi carrera</strong>
@@ -1529,6 +1684,7 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
         </section>
       </aside>
       <main class="siase-career-main" aria-label="Proximas a vencer">
+        <section class="siase-career-content-host" data-siase-career-content-host aria-label="Contenido de SIASE"></section>
       </main>
       <aside class="siase-career-sidebar">
         <section class="siase-career-insight-card" aria-label="Resumen academico">
@@ -1602,11 +1758,22 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     const careerButton = target?.closest<HTMLButtonElement>('[data-siase-career-index]');
     if (careerButton) {
       const index = Number(careerButton.dataset.siaseCareerIndex);
-      if (Number.isInteger(index) && selectCareerByIndex(frameDocument, index)) closeCareerListModal(wrapper);
+      if (Number.isInteger(index) && selectCareerByIndex(frameDocument, wrapper, index))
+        closeCareerListModal(wrapper);
       return;
     }
 
     if (target?.closest('[data-siase-career-modal-close]')) closeCareerListModal(wrapper);
+  });
+
+  wrapper.querySelector<HTMLElement>('[data-siase-career-rail-menu]')?.addEventListener('click', (event) => {
+    const button = (event.target as Element | null)?.closest<HTMLButtonElement>(
+      '[data-siase-menu-href]'
+    );
+    const href = button?.dataset.siaseMenuHref;
+    if (!href) return;
+
+    navigateSiaseCenter(wrapper, href);
   });
 
   wrapper
