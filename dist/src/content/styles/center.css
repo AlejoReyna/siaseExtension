@@ -871,6 +871,13 @@ body.siase-plus-career-landing > br {
   height: 100%;
 }
 
+.siase-career-sidebar {
+  grid-auto-rows: max-content;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
 .siase-career-system-sidebar {
   position: fixed;
   top: 0;
@@ -1491,6 +1498,121 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
   border-radius: 13px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.siase-career-insight-card {
+  display: grid;
+  gap: 16px;
+  min-height: 206px;
+  padding: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 199, 44, 0.22), transparent 34%),
+    linear-gradient(135deg, var(--primary-color), #001a36);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 78%, #ffffff);
+  border-radius: 20px;
+  box-shadow: 0 18px 42px rgba(0, 46, 93, 0.18);
+}
+
+.siase-career-insight-card__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+.siase-career-insight-card__tabs button {
+  min-height: 32px;
+  color: rgba(255, 255, 255, 0.72);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font: 900 11px/1 Inter, ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.siase-career-insight-card__tabs button.is-active {
+  color: var(--primary-color);
+  background: var(--secondary-color);
+  box-shadow: 0 10px 22px rgba(0, 26, 54, 0.18);
+}
+
+.siase-career-insight-card__panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 116px;
+}
+
+.siase-career-insight-card__panel[hidden] {
+  display: none;
+}
+
+.siase-career-insight-card__heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.siase-career-insight-card .siase-dashboard__eyebrow {
+  margin: 0;
+  color: #fff3c4;
+}
+
+.siase-career-insight-card__heading strong {
+  color: #ffffff;
+  font-size: clamp(34px, 4vw, 46px);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+}
+
+.siase-career-insight-progress {
+  height: 11px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+.siase-career-insight-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--secondary-color), #ffffff);
+  border-radius: inherit;
+}
+
+.siase-career-insight-card p:not(.siase-dashboard__eyebrow) {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.siase-career-average-display {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  padding: 8px 0 2px;
+}
+
+.siase-career-average-display strong {
+  color: #ffffff;
+  font-size: clamp(52px, 6vw, 76px);
+  font-weight: 950;
+  line-height: 0.86;
+  letter-spacing: -0.08em;
+  text-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+}
+
+.siase-career-average-display span {
+  color: var(--secondary-color);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .siase-career-news-card {

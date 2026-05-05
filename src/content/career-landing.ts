@@ -1448,6 +1448,34 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
       <main class="siase-career-main" aria-label="Proximas a vencer">
       </main>
       <aside class="siase-career-sidebar">
+        <section class="siase-career-insight-card" aria-label="Resumen academico">
+          <div class="siase-career-insight-card__tabs" role="tablist" aria-label="Cambiar resumen academico">
+            <button type="button" id="siase-insight-tab-progress" class="is-active" data-siase-insight-tab="progress" role="tab" aria-controls="siase-insight-panel-progress" aria-selected="true">
+              Progreso
+            </button>
+            <button type="button" id="siase-insight-tab-average" data-siase-insight-tab="average" role="tab" aria-controls="siase-insight-panel-average" aria-selected="false">
+              Mi promedio
+            </button>
+          </div>
+          <div class="siase-career-insight-card__panel is-active" id="siase-insight-panel-progress" data-siase-insight-panel="progress" role="tabpanel" aria-labelledby="siase-insight-tab-progress">
+            <div class="siase-career-insight-card__heading">
+              <p class="siase-dashboard__eyebrow">Avance global</p>
+              <strong>64%</strong>
+            </div>
+            <div class="siase-career-insight-progress" aria-hidden="true">
+              <span style="width: 64%"></span>
+            </div>
+            <p>Progreso estimado del plan académico actual.</p>
+          </div>
+          <div class="siase-career-insight-card__panel" id="siase-insight-panel-average" data-siase-insight-panel="average" role="tabpanel" aria-labelledby="siase-insight-tab-average" hidden>
+            <p class="siase-dashboard__eyebrow">Mi promedio</p>
+            <div class="siase-career-average-display">
+              <strong>92.4</strong>
+              <span>Promedio general</span>
+            </div>
+            <p>Vista preparada para mostrar el promedio académico cuando esté disponible.</p>
+          </div>
+        </section>
         <section class="siase-career-news-card">
           <div class="siase-career-news-card__header">
             <span>${iconMarkup('message')}</span>
@@ -1484,6 +1512,27 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
   wrapper
     .querySelector<HTMLButtonElement>('[data-siase-career-logout]')
     ?.addEventListener('click', () => handleCareerLogout(frameDocument));
+
+  const insightCard = wrapper.querySelector<HTMLElement>('.siase-career-insight-card');
+  insightCard?.addEventListener('click', (event) => {
+    const button = (event.target as Element | null)?.closest<HTMLButtonElement>(
+      '[data-siase-insight-tab]'
+    );
+    const target = button?.dataset.siaseInsightTab;
+    if (!target) return;
+
+    insightCard.querySelectorAll<HTMLButtonElement>('[data-siase-insight-tab]').forEach((tab) => {
+      const isActive = tab.dataset.siaseInsightTab === target;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', String(isActive));
+    });
+
+    insightCard.querySelectorAll<HTMLElement>('[data-siase-insight-panel]').forEach((panel) => {
+      const isActive = panel.dataset.siaseInsightPanel === target;
+      panel.classList.toggle('is-active', isActive);
+      panel.hidden = !isActive;
+    });
+  });
 
   return wrapper;
 }
