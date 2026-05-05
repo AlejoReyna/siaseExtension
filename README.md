@@ -140,3 +140,29 @@ The latest build completed successfully.
 ### Career Landing Dashboard
 
 The `eselcarrera.htm` post-login landing page is handled by a dedicated content script (`src/content/career-landing.ts`) because it uses legacy tables, hover-swapped absolute panels, and CGI forms that must remain intact. It shares the center-frame theme tokens through `src/content/theme.ts` and scopes its CSS under `body.siase-plus-career-landing`.
+
+---
+
+## May 5, 2026 — Nexus Upcoming Activities Widget
+
+I built a widget on the `eselcarrera.htm` dashboard that pulls the student's upcoming Nexus assignments and renders them inline, without requiring the student to open Nexus separately.
+
+### Getting the token
+
+Nexus runs on a different origin (`api.nexus.uanl.mx`) and authenticates through a SIASE-signed session token. The career landing page does not have that token in scope. I thread together three systems to get it: the legacy CGI session, a hidden iframe submit that bounces through the SIASE auth flow, and a service worker that intercepts the Nexus session when the student visits Nexus directly and stores it in `chrome.storage.local`.
+
+`career-landing.ts` tries each authentication path in sequence until one works, caches the resulting token in `localStorage`, then calls two Nexus API endpoints: `ConsultarCarpetaCursos` to get the student's active courses, and `ConsultarEstructura` once per course to fetch activity deadlines. I filter results to the next seven calendar days and render them as a sorted list.
+
+### Four bugs, zero activities
+
+I ran a live diagnostic against real ENE-JUN 2026 semester data and found the widget showing zero activities for a student with five deadlines inside the next seven days. The problems stacked.
+
+**Token TTL mismatch.** I had hardcoded `8 * 60 * 60 * 1000` (eight hours) as the session cache TTL. Nexus expires sessions after roughly five hours and twenty minutes. The cached token looked valid to my code, but the API returned `Code: 2004` on every request. I changed `leerSesionNexus` to read `Sesion.FechaInicio` and `Sesion.TiempoRestante` directly from the stored session object and compute the exact expiry with a two-minute safety margin. When those fields are absent on older cached sessions, I fall back to four hours instead of eight.
+
+**Service worker returning stale sessions.** Even after fixing the TTL check in the content script, the service worker's `GET_CAPTURED_NEXUS_SESSION` handler sent back whatever was in `chrome.storage.local` without checking its age. The content script would receive the expired session, write it to `localStorage` with a fresh `_cachedAt` timestamp, and pass the TTL check I had just added. I added the same `FechaInicio + TiempoRestante` validation inside the SW handler. If the stored session is expired, the SW deletes it from `chrome.storage.local` before responding, so `career-landing.ts` never sees a stale token.
+
+**Off-by-hours filter.** `filtrarActividades` calculated the seven-day window as `Date.now() + 7 * 24 * 60 * 60 * 1000`. An activity due at 23:59 on day seven would miss the cutoff if the page loaded after, say, 21:43. I replaced the cutoff with a date advanced by seven days via `setDate`, then clamped to end-of-day with `setHours(23, 59, 59, 999)`, so the window always reaches the last second of the seventh calendar day regardless of when the student loads the page.
+
+**Silent error swallowing.** When the API returned a session-expired payload (`Code: 2004` or `Code: 2011`) with an HTTP 200 status, `extractCoursesFromNexusResponse` received that error object, found no courses in it, and the widget reported "No tienes cursos activos en Nexus" as if the student had no classes. I added a `data.Code` check right after `ConsultarCarpetaCursos` returns. On a session error, the widget now shows "Sesión de Nexus expirada. Recarga la página para reconectar", clears the local token, and fires a `CLEAR_NEXUS_SESSION` message so the service worker and the content script both clear their caches in sync.
+
+All five activities for the week appear after the four fixes.
