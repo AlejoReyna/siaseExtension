@@ -693,7 +693,7 @@ body.siase-plus-center a {
 }
 
 body.siase-plus-career-landing {
-  --career-rail-width: clamp(104px, 10vw, 140px);
+  --career-rail-width: clamp(62px, 6vw, 84px);
   padding: 22px 24px 24px calc(var(--career-rail-width) + 24px) !important;
   background:
     radial-gradient(circle at top right, rgba(255, 199, 44, 0.18), transparent 32rem),
@@ -1007,8 +1007,10 @@ body.siase-plus-career-landing > br {
 }
 
 .siase-career-quick-panel--sidebar {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   height: 100%;
-  padding: 18px 12px;
+  padding: 16px 8px;
   overflow: hidden auto;
   background:
     radial-gradient(circle at 50% 0%, rgba(255, 199, 44, 0.18), transparent 28%),
@@ -1083,8 +1085,9 @@ body.siase-plus-career-landing > br {
 }
 
 .siase-career-quick-panel--sidebar .siase-career-quick-grid {
+  align-content: start;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 12px;
   min-height: 0;
 }
 
@@ -1110,9 +1113,9 @@ body.siase-plus-career-landing > br {
 
 .siase-career-quick-panel--sidebar .siase-career-quick-card {
   justify-items: center;
-  gap: 6px;
-  min-height: 78px;
-  padding: 10px 6px;
+  min-height: 52px;
+  padding: 8px 4px;
+  color: #ffffff;
   border-radius: 14px;
   text-align: center;
 }
@@ -1120,16 +1123,46 @@ body.siase-plus-career-landing > br {
 .siase-career-quick-panel--sidebar .siase-career-quick-card__icon {
   width: 36px;
   height: 36px;
+  color: #ffffff;
+  background: transparent;
   border-radius: 12px;
 }
 
 .siase-career-quick-panel--sidebar .siase-career-quick-card strong {
-  font-size: 11px;
-  line-height: 1.15;
+  display: none;
 }
 
 .siase-career-quick-panel--sidebar .siase-career-quick-card em {
   display: none;
+}
+
+.siase-career-rail-logout {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 16px;
+  margin-bottom: 18px;
+  padding: 8px 4px;
+  color: #ffffff;
+  background: transparent;
+  border: 0;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    transform 150ms ease,
+    background 150ms ease;
+}
+
+.siase-career-rail-logout:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.siase-career-rail-logout .siase-career-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .siase-career-quick-card {

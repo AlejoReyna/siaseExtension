@@ -125,6 +125,7 @@ function iconMarkup(name: string): string {
     download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
     mail: '<path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/>',
     message: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/>',
+    logout: '<path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 19V5a2 2 0 0 0-2-2h-6M13 21h6a2 2 0 0 0 2-2"/>',
     search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
     services:
       '<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/><path d="m3 18 9 5 9-5"/>',
@@ -1362,6 +1363,29 @@ function classifyLegacyStructure(frameDocument: Document): void {
   });
 }
 
+function handleCareerLogout(frameDocument: Document): void {
+  const logoutControl = Array.from(
+    frameDocument.querySelectorAll<HTMLAnchorElement | HTMLButtonElement | HTMLInputElement>(
+      'a, button, input[type="button"], input[type="submit"]'
+    )
+  ).find((element) => {
+    const label = element instanceof HTMLInputElement ? element.value : element.textContent;
+    return /salir|cerrar\s+sesi[oó]n|logout/i.test(label ?? '');
+  });
+
+  if (logoutControl instanceof HTMLAnchorElement && logoutControl.href) {
+    window.top?.location.assign(logoutControl.href);
+    return;
+  }
+
+  if (logoutControl) {
+    logoutControl.click();
+    return;
+  }
+
+  window.top?.location.assign('/');
+}
+
 function createDashboardChrome(frameDocument: Document): HTMLElement {
   const careerCount = findCareerCount(frameDocument);
   const email = findStudentEmail(frameDocument);
@@ -1393,33 +1417,32 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     <div class="siase-career-grid">
       <aside class="siase-career-system-sidebar" aria-label="Acceso rapido del sistema">
         <section class="siase-career-section siase-career-quick-panel siase-career-quick-panel--sidebar siase-entrance">
-          <div class="siase-career-section__header">
-            <h2>Acceso rapido</h2>
-            <span>Servicios principales</span>
-          </div>
           <div class="siase-career-quick-grid">
-            <button type="button" data-siase-career-panel="siase" class="siase-career-quick-card is-active">
+            <button type="button" data-siase-career-panel="siase" class="siase-career-quick-card is-active" aria-label="Mi carrera">
               <span class="siase-career-quick-card__icon siase-career-quick-card__icon--blue">${iconMarkup('book')}</span>
               <strong>Mi carrera</strong>
               <em>${careerCount || 1} disponibles</em>
             </button>
-            <button type="button" data-siase-career-panel="correo" class="siase-career-quick-card">
+            <button type="button" data-siase-career-panel="correo" class="siase-career-quick-card" aria-label="Correo universitario">
               <span class="siase-career-quick-card__icon siase-career-quick-card__icon--yellow">${iconMarkup('mail')}</span>
               <strong>Correo</strong>
               <em>Universitario</em>
             </button>
-            <button type="button" data-siase-career-panel="nexus" class="siase-career-quick-card">
+            <button type="button" data-siase-career-panel="nexus" class="siase-career-quick-card" aria-label="Nexus">
               <span class="siase-career-quick-card__icon siase-career-quick-card__icon--green">${iconMarkup('video')}</span>
               <strong>Nexus</strong>
               <em>Clases en linea</em>
             </button>
-            <button type="button" data-siase-career-panel="codice" class="siase-career-quick-card">
+            <button type="button" data-siase-career-panel="codice" class="siase-career-quick-card" aria-label="CODICE">
               <span class="siase-career-quick-card__icon siase-career-quick-card__icon--cyan">${iconMarkup('services')}</span>
               <strong>CODICE</strong>
               <em>Biblioteca digital</em>
             </button>
           </div>
           <div class="siase-career-legacy-slot" data-siase-career-legacy-slot></div>
+          <button type="button" class="siase-career-rail-logout" data-siase-career-logout aria-label="Cerrar sesion">
+            ${iconMarkup('logout')}
+          </button>
         </section>
       </aside>
       <main class="siase-career-main" aria-label="Proximas a vencer">
@@ -1457,6 +1480,10 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
       showPanel(frameDocument, panelId);
     });
   });
+
+  wrapper
+    .querySelector<HTMLButtonElement>('[data-siase-career-logout]')
+    ?.addEventListener('click', () => handleCareerLogout(frameDocument));
 
   return wrapper;
 }
