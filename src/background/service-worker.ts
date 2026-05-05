@@ -194,6 +194,27 @@ export function initializeServiceWorker(): void {
       chrome.storage.local
         .get(['nexusSessionStorage', 'nexusSessionCapturedAt'])
         .then((data) => {
+          const session = data.nexusSessionStorage as
+            | { Sesion?: { FechaInicio?: string; TiempoRestante?: number } }
+            | undefined;
+
+          // Validar el TTL real de la sesión antes de devolverla.
+          // Sin este chequeo, el SW devuelve sesiones expiradas con los mismos campos
+          // que una sesión válida, haciendo que career-landing.ts las acepte y falle
+          // al llamar a la API con un token caducado.
+          if (session?.Sesion?.FechaInicio && typeof session.Sesion.TiempoRestante === 'number') {
+            const expiry =
+              new Date(session.Sesion.FechaInicio).getTime() +
+              session.Sesion.TiempoRestante * 1000;
+            const MARGIN_MS = 2 * 60 * 1000;
+            if (Date.now() > expiry - MARGIN_MS) {
+              console.info(`${NEXUS_LOG_PREFIX} cached session expired in SW; discarding`);
+              void chrome.storage.local.remove(['nexusSessionStorage', 'nexusSessionCapturedAt']);
+              sendResponse({ ok: false, status: 200, data: { nexusSessionStorage: null } });
+              return;
+            }
+          }
+
           sendResponse({
             ok: Boolean(data.nexusSessionStorage),
             status: 200,
@@ -208,6 +229,12 @@ export function initializeServiceWorker(): void {
           });
         });
       return true;
+    }
+
+    if (message.type === 'CLEAR_NEXUS_SESSION') {
+      void chrome.storage.local.remove(['nexusSessionStorage', 'nexusSessionCapturedAt']);
+      console.info(`${NEXUS_LOG_PREFIX} nexus session cleared by content script request`);
+      return false;
     }
 
     return false;

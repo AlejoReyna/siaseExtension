@@ -23,6 +23,9 @@ export interface NexusSessionCapturedMessage {
 export interface GetCapturedNexusSessionMessage {
   type: 'GET_CAPTURED_NEXUS_SESSION';
 }
+export interface ClearNexusSessionMessage {
+  type: 'CLEAR_NEXUS_SESSION';
+}
 export interface NexusApiResponseMessage {
   ok: boolean;
   status: number;
@@ -41,4 +44,5 @@ export type ChromeMessage =
   | NexusApiRequestMessage
   | NexusPortalRequestMessage
   | NexusSessionCapturedMessage
-  | GetCapturedNexusSessionMessage;
+  | GetCapturedNexusSessionMessage
+  | ClearNexusSessionMessage;

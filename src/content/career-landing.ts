@@ -11,7 +11,10 @@ type PanelId = (typeof PANEL_IDS)[number];
 const NEXUS_API_BASE = 'https://api.nexus.uanl.mx/WebApi';
 const NEXUS_CACHE_KEY = 'siase_nexus_widget_cache';
 const NEXUS_CACHE_TTL = 60 * 60 * 1000;
-const NEXUS_TOKEN_TTL = 8 * 60 * 60 * 1000;
+/** Margen de seguridad: invalidar 2 min antes de que Nexus expire la sesión */
+const NEXUS_TOKEN_EXPIRY_MARGIN_MS = 2 * 60 * 1000;
+/** Fallback conservador cuando la sesión no trae FechaInicio/TiempoRestante */
+const NEXUS_TOKEN_TTL_FALLBACK = 4 * 60 * 60 * 1000;
 const NEXUS_LOG_PREFIX = '[SIASE Plus Nexus]';
 
 interface NexusSessionStorage {
@@ -20,6 +23,9 @@ interface NexusSessionStorage {
     AreaAcademicaId?: string | number;
     RolId?: string | number;
     SistemaId?: string | number;
+    /** Campos que Nexus incluye en la sesión y nos permiten calcular el TTL exacto */
+    FechaInicio?: string;
+    TiempoRestante?: number;
   };
   _cachedAt?: number;
 }
@@ -60,6 +66,9 @@ interface NexusCoursesResponse {
   Carpetas?: Array<{
     Cursos?: NexusCourse[];
   }>;
+  /** Código de error de aplicación que Nexus devuelve con HTTP 200 cuando la sesión expiró */
+  Code?: number;
+  Message?: string;
 }
 
 interface NexusEvidence {
@@ -700,7 +709,12 @@ function filtrarActividades(
 ): NexusActivity[] {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
-  const en7 = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
+  // Usar el fin del día +7 (23:59:59.999) en lugar de "ahora + 7*24h".
+  // El enfoque anterior excluía actividades con FechaLimite=23:59 del día 7
+  // porque la hora exacta "ahora + 168h" quedaba antes de las 23:59 de ese día.
+  const en7 = new Date(hoy);
+  en7.setDate(en7.getDate() + 7);
+  en7.setHours(23, 59, 59, 999);
   const ahora = new Date();
   const actividades: NexusActivity[] = [];
 
@@ -925,17 +939,34 @@ function leerSesionNexus(frameWindow: Window): NexusAuthResult | null {
       return null;
     }
 
-    const cachedAt = cached._cachedAt || 0;
-    if (Date.now() - cachedAt > NEXUS_TOKEN_TTL) {
-      frameWindow.localStorage.removeItem('UanlNexus7SesionStorage');
-      logNexus('info', 'token Nexus cacheado expirado; se intentara renovar', {
-        ageMs: Date.now() - cachedAt
-      });
-      return null;
+    // Calcular expiración real usando los campos que Nexus incluye en la propia sesión.
+    // Esto evita el bug de usar un TTL fijo (8h) mayor que el TTL real del servidor (≈5h 20min).
+    const sesion = cached.Sesion;
+    if (sesion?.FechaInicio && typeof sesion.TiempoRestante === 'number') {
+      const expiry = new Date(sesion.FechaInicio).getTime() + sesion.TiempoRestante * 1000;
+      if (Date.now() > expiry - NEXUS_TOKEN_EXPIRY_MARGIN_MS) {
+        frameWindow.localStorage.removeItem('UanlNexus7SesionStorage');
+        logNexus('info', 'token Nexus expirado segun FechaInicio+TiempoRestante; se renovara', {
+          FechaInicio: sesion.FechaInicio,
+          TiempoRestante: sesion.TiempoRestante,
+          expiry: new Date(expiry).toISOString()
+        });
+        return null;
+      }
+    } else {
+      // Fallback conservador (4 h) cuando la sesión no trae los campos de TTL exactos.
+      const cachedAt = cached._cachedAt || 0;
+      if (Date.now() - cachedAt > NEXUS_TOKEN_TTL_FALLBACK) {
+        frameWindow.localStorage.removeItem('UanlNexus7SesionStorage');
+        logNexus('info', 'token Nexus cacheado expirado (fallback 4h); se intentara renovar', {
+          ageMs: Date.now() - cachedAt
+        });
+        return null;
+      }
     }
 
     logNexus('info', 'usando token Nexus cacheado', {
-      ageMs: Date.now() - cachedAt,
+      ageMs: Date.now() - (cached._cachedAt || 0),
       areaAcademicaId: cached.Sesion?.AreaAcademicaId,
       rolId: cached.Sesion?.RolId ?? 5,
       token: '[redacted]'
@@ -1188,6 +1219,23 @@ async function iniciarWidgetNexus(frameDocument: Document): Promise<void> {
       headers,
       { CarpetaId: 0, Pagina: 1, Paginacion: 50 }
     );
+
+    // Nexus devuelve Code:2004 (sesión expirada) o Code:2011 (token inválido) con HTTP 200.
+    // Sin este chequeo, el extractor interpreta la respuesta de error como "0 cursos"
+    // y el widget muestra "No tienes cursos activos" en lugar de un error de autenticación.
+    if (data?.Code === 2004 || data?.Code === 2011) {
+      logNexus('warn', 'token rechazado por Nexus; limpiando cache y notificando al SW', {
+        Code: data.Code,
+        Message: data.Message
+      });
+      frameWindow.localStorage.removeItem('UanlNexus7SesionStorage');
+      if (chrome.runtime?.id) {
+        void chrome.runtime.sendMessage({ type: 'CLEAR_NEXUS_SESSION' });
+      }
+      mostrarWidgetError(frameDocument, 'Sesion de Nexus expirada. Recarga la pagina para reconectar.');
+      return;
+    }
+
     const cursos = extractCoursesFromNexusResponse(data).filter((curso) => curso.CursoId);
 
     logNexus('info', 'unidades de aprendizaje detectadas', {
