@@ -5,7 +5,7 @@ Chrome Extension Manifest V3 for modernizing the UANL SIASE portal at `https://d
 ## Features
 
 - Modern reskin for SIASE `top`, `left`, and `center` frames.
-- Dashboard-style landing experience for `eselcarrera.htm`, preserving the legacy career selector and service forms while adding a modern hero, quick-access cards, sidebar reminders, and themed panels.
+- Dashboard-style landing experience for `eselcarrera.htm`, preserving the legacy career selector while keeping a persistent left rail when SIASE opens.
 - Popup dashboard with cached grades and schedule.
 - Grade-change notifications from a background service worker.
 - Schedule parsing and `.ics` export.
@@ -144,6 +144,12 @@ The `eselcarrera.htm` post-login landing page is handled by a dedicated content 
 ### Slim Left-Rail Career Design
 
 The career landing dashboard now moves the quick-access services into a slim fixed left rail inspired by the SIASE sidebar. The rail stays attached to the left edge at roughly 10% of the viewport width, while the central area focuses on the Nexus "Proximas a vencer" widget and the right column keeps institutional news.
+
+### Persistent SIASE Shell
+
+Opening a career from the `eselcarrera.htm` selector now keeps the modern landing shell alive instead of replacing the whole page. The original `SelCarrera` form is submitted into a named iframe inside the right-side content area, so the left rail remains visible while the legacy SIASE frameset loads internally.
+
+Once SIASE loads, `career-landing.ts` collapses the embedded legacy `top` and `left` frames and shows only the embedded `center` frame. It then parses the legacy `left` menu with the existing menu parser and replaces the initial landing shortcuts with real SIASE navigation buttons. Clicking those rail buttons changes only the embedded `center` frame, preserving the modern shell around the portal content.
 
 ---
 
