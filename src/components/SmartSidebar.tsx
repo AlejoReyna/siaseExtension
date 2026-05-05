@@ -1,7 +1,6 @@
 import { type CSSProperties, useMemo, useState } from 'react';
 import type { MenuItem } from '@/types/menu';
 import { PinButton } from './PinButton';
-import { SearchInput } from './SearchInput';
 
 export interface SmartSidebarProps {
   items: MenuItem[];
@@ -54,6 +53,12 @@ function serviceIcon(label: string, category: MenuItem['category']): string {
 
 function Icon({ name }: { name: string }): JSX.Element {
   const paths: Record<string, JSX.Element> = {
+    'arrow-left': (
+      <>
+        <path d="M19 12H5" />
+        <path d="m12 19-7-7 7-7" />
+      </>
+    ),
     'badge-check': (
       <>
         <path d="M8.6 14.2 11 16.6l4.8-5.2" />
@@ -139,12 +144,9 @@ function Icon({ name }: { name: string }): JSX.Element {
 
 export function SmartSidebar({
   items,
-  query,
   pinnedIds,
-  onQueryChange,
   onTogglePinned
 }: SmartSidebarProps): JSX.Element {
-  const [localQuery, setLocalQuery] = useState(query);
   const [localPinnedIds, setLocalPinnedIds] = useState<string[]>(pinnedIds);
   const [openCategories, setOpenCategories] = useState<Record<MenuItem['category'], boolean>>({
     academic: false,
@@ -155,28 +157,19 @@ export function SmartSidebar({
     other: false
   });
 
-  const filteredItems = useMemo(
-    () => items.filter((item) => item.label.toLowerCase().includes(localQuery.toLowerCase())),
-    [items, localQuery]
-  );
-  const pinnedItems = filteredItems.filter((item) => localPinnedIds.includes(item.id));
+  const pinnedItems = items.filter((item) => localPinnedIds.includes(item.id));
   const categorizedItems = useMemo(
     () =>
       categoryOrder
         .map((category) => ({
           category,
-          items: filteredItems.filter(
+          items: items.filter(
             (item) => item.category === category && !localPinnedIds.includes(item.id)
           )
         }))
         .filter((group) => group.items.length),
-    [filteredItems, localPinnedIds]
+    [items, localPinnedIds]
   );
-
-  function handleQueryChange(nextQuery: string): void {
-    setLocalQuery(nextQuery);
-    onQueryChange(nextQuery);
-  }
 
   function handleTogglePinned(id: string): void {
     setLocalPinnedIds((current) =>
@@ -212,6 +205,10 @@ export function SmartSidebar({
     window.top?.location.assign('/');
   }
 
+  function handleGoBack(): void {
+    window.top?.history.back();
+  }
+
   const renderItem = (item: MenuItem) => (
     <li key={item.id} className={`quest-card quest-card--${item.category}`}>
       <a href={item.href} target={item.target} rel="noreferrer" className="quest-link">
@@ -231,6 +228,10 @@ export function SmartSidebar({
   return (
     <nav className="siase-game-panel" aria-label="SIASE Plus navigation">
       <header className="game-panel-header">
+        <button type="button" className="sidebar-back-button" onClick={handleGoBack}>
+          <Icon name="arrow-left" />
+          <span>Go back</span>
+        </button>
         <div className="sidebar-brand">
           <span className="sidebar-brand-mark">U</span>
           <span>
@@ -239,12 +240,6 @@ export function SmartSidebar({
           </span>
         </div>
       </header>
-
-      <SearchInput
-        value={localQuery}
-        placeholder="Buscar servicio..."
-        onChange={handleQueryChange}
-      />
 
       {/*
       <section className="sidebar-summary" aria-label="Servicios disponibles">

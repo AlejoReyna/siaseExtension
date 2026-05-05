@@ -1,2 +1,1 @@
 async function e(e){return(await chrome.storage.local.get(e))[e]}async function t(e,t){await chrome.storage.local.set({[e]:t})}export{t as n,e as t};
-//# sourceMappingURL=storage-CGf68QnW.js.map

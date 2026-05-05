@@ -50,6 +50,37 @@
   backdrop-filter: blur(12px);
 }
 
+.sidebar-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 12px;
+  padding: 7px 10px;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.sidebar-back-button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateX(-1px);
+}
+
+.sidebar-back-button .sidebar-icon {
+  width: 15px;
+  height: 15px;
+}
+
 .sidebar-brand {
   display: flex;
   align-items: center;

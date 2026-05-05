@@ -705,6 +705,8 @@ body.siase-plus-career-landing > br {
 
 .siase-career-dashboard {
   width: min(100%, 1180px);
+  height: calc(100vh - 190px);
+  min-height: 560px;
   margin: 0 auto 22px;
 }
 
@@ -851,6 +853,8 @@ body.siase-plus-career-landing > br {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(280px, 0.9fr);
   gap: 22px;
+  height: calc(100% - 94px);
+  min-height: 0;
   margin-top: 22px;
 }
 
@@ -859,6 +863,7 @@ body.siase-plus-career-landing > br {
   display: grid;
   align-content: start;
   gap: 18px;
+  min-height: 0;
 }
 
 .siase-career-hero {
@@ -959,12 +964,34 @@ body.siase-plus-career-landing > br {
 
 .siase-career-section,
 .siase-career-profile-card,
+.siase-career-news-card,
 .siase-career-events-card {
   padding: 20px;
   background: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.siase-career-quick-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.28), transparent 34%),
+    linear-gradient(135deg, #0758b8, #4ea3ff);
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 22px 50px rgba(7, 88, 184, 0.2);
+}
+
+.siase-career-quick-panel .siase-career-section__header h2 {
+  color: #ffffff;
+}
+
+.siase-career-quick-panel .siase-career-section__header span {
+  color: #fff3c4;
 }
 
 .siase-career-section__header {
@@ -977,6 +1004,7 @@ body.siase-plus-career-landing > br {
 
 .siase-career-section__header h2,
 .siase-career-profile-card h2,
+.siase-career-news-card h2,
 .siase-career-events-card h2 {
   margin: 0;
   color: var(--text-color);
@@ -997,12 +1025,37 @@ body.siase-plus-career-landing > br {
   gap: 14px;
 }
 
+.siase-career-quick-panel .siase-career-quick-grid {
+  min-height: 118px;
+  align-items: stretch;
+}
+
+.siase-career-quick-panel .siase-career-quick-card {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.siase-career-quick-panel .siase-career-quick-card:hover,
+.siase-career-quick-panel .siase-career-quick-card.is-active {
+  border-color: var(--secondary-color);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 14px 28px rgba(0, 26, 54, 0.18);
+}
+
+.siase-career-quick-panel .siase-career-quick-card em {
+  color: rgba(255, 255, 255, 0.76);
+}
+
 .siase-career-quick-card {
   display: grid;
   justify-items: center;
   gap: 8px;
-  min-height: 132px;
-  padding: 18px 12px;
+  min-height: 116px;
+  padding: 14px 12px;
   color: var(--text-color);
   background: var(--surface-color);
   border: 1px solid var(--border-color);
@@ -1062,6 +1115,213 @@ body.siase-plus-career-landing > br {
   background: rgba(14, 165, 233, 0.12);
 }
 
+.siase-career-legacy-slot {
+  min-height: 0;
+  margin-top: 18px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+.siase-career-legacy-slot .siase-plus-career-panel {
+  position: static !important;
+  display: none;
+  width: 100% !important;
+  max-width: none !important;
+  visibility: visible !important;
+  animation: siaseFadeUp 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.siase-career-legacy-slot .siase-plus-career-panel.is-active {
+  display: block;
+}
+
+.siase-career-legacy-slot .siase-plus-career-panel > table {
+  width: 100% !important;
+  max-width: none !important;
+  max-height: 100% !important;
+  background: color-mix(in srgb, var(--surface-color) 96%, transparent) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 18px 45px rgba(0, 26, 54, 0.16) !important;
+}
+
+.siase-career-legacy-slot .margen {
+  padding: 18px !important;
+}
+
+body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-panel > table {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.siase-nexus-widget {
+  display: grid;
+  gap: 0;
+}
+
+.siase-nexus-widget .siase-career-section__header {
+  margin-bottom: 16px;
+  color: var(--text-color);
+}
+
+.siase-nexus-widget .siase-career-section__header h2 {
+  color: var(--text-color);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.siase-nexus-widget .siase-career-section__header > span {
+  color: var(--muted-color);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.siase-nexus-widget__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.siase-nexus-widget__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--primary-color);
+  background: rgba(7, 88, 184, 0.1);
+  border-radius: 12px;
+}
+
+.siase-nexus-widget__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.siase-nexus-widget__group {
+  display: grid;
+  gap: 8px;
+}
+
+.siase-nexus-widget__group .siase-dashboard__eyebrow {
+  margin: 0 0 8px;
+  color: var(--secondary-color);
+}
+
+.siase-nexus-widget__group--week {
+  margin-top: 12px;
+}
+
+.siase-nexus-widget__item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--surface-muted);
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  border-radius: 14px;
+  cursor: default;
+  transition: background 150ms ease;
+}
+
+.siase-nexus-widget__item:hover {
+  background: color-mix(in srgb, var(--surface-muted) 82%, var(--primary-color) 18%);
+}
+
+.siase-nexus-widget__item--urgente {
+  background: #fff3e6;
+  border-color: rgba(234, 88, 12, 0.2);
+}
+
+.siase-nexus-widget__item--urgente:hover {
+  background: #ffe8d2;
+}
+
+.siase-nexus-widget__item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.siase-nexus-widget__materia {
+  overflow: hidden;
+  color: var(--primary-color);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.siase-nexus-widget__badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  color: var(--primary-color);
+  background: rgba(7, 88, 184, 0.1);
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.siase-nexus-widget__badge--urgente {
+  color: #c2410c;
+  background: rgba(234, 88, 12, 0.12);
+}
+
+.siase-nexus-widget__titulo {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.siase-nexus-widget__meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  color: var(--muted-color);
+  font-size: 11px;
+}
+
+.siase-nexus-widget__empty {
+  padding: 13px 14px;
+  color: var(--muted-color);
+  background: var(--surface-muted);
+  border-radius: 14px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.siase-nexus-widget__skeleton {
+  display: grid;
+  gap: 8px;
+}
+
+.siase-nexus-widget__skeleton-item {
+  height: 72px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 25%,
+    color-mix(in srgb, var(--surface-muted) 80%, var(--primary-color) 20%) 50%,
+    var(--surface-muted) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 14px;
+  animation: siase-shimmer 1.4s infinite;
+}
+
+@keyframes siase-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .siase-career-profile-card {
   text-align: center;
 }
@@ -1107,6 +1367,54 @@ body.siase-plus-career-landing > br {
   border-radius: 13px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.siase-career-news-card {
+  display: grid;
+  min-height: 281px;
+  gap: 12px;
+}
+
+.siase-career-news-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.siase-career-news-card__header > span {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  color: var(--primary-color);
+  background: rgba(7, 88, 184, 0.1);
+  border-radius: 15px;
+}
+
+.siase-career-news-card__header .siase-dashboard__eyebrow {
+  margin-bottom: 4px;
+}
+
+.siase-career-news-card article {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  background: var(--surface-muted);
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  border-radius: 14px;
+}
+
+.siase-career-news-card article strong {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.siase-career-news-card article em {
+  color: var(--muted-color);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.45;
 }
 
 .siase-career-events-card {
@@ -1166,6 +1474,10 @@ body.siase-plus-career-landing .siase-plus-career-layout {
 
 body.siase-plus-career-landing .siase-plus-career-banner {
   margin: 0 auto 18px !important;
+}
+
+body.siase-plus-career-landing .siase-plus-career-footer {
+  margin: 28px auto 0 !important;
 }
 
 body.siase-plus-career-landing .siase-plus-career-banner img {

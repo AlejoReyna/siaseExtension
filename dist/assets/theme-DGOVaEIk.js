@@ -1,2 +1,1 @@
 var e=`institutional`;function t(t){try{return t.defaultView?.localStorage.getItem(`siase-plus-theme`)??e}catch{return e}}function n(e,t){try{e.defaultView?.localStorage.setItem(`siase-plus-theme`,t)}catch{}}function r(e,t){e.body.dataset.siaseTheme=t,n(e,t)}function i(e){r(e,t(e))}export{r as n,t as r,i as t};
-//# sourceMappingURL=theme-DGOVaEIk.js.map
