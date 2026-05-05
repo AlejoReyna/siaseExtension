@@ -116,8 +116,6 @@ class NexusAuthError extends Error {
 
 function iconMarkup(name: string): string {
   const icons: Record<string, string> = {
-    bell:
-      '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
     book: '<path d="M4 19.5V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-1.5Z"/><path d="M8 7h6M8 11h8"/>',
     calendar:
       '<path d="M7 3v4M17 3v4M4 9h16"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 13h.01M12 13h.01M16 13h.01"/>',
@@ -126,7 +124,6 @@ function iconMarkup(name: string): string {
     mail: '<path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/>',
     message: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/>',
     logout: '<path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 19V5a2 2 0 0 0-2-2h-6M13 21h6a2 2 0 0 0 2-2"/>',
-    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
     services:
       '<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/><path d="m3 18 9 5 9-5"/>',
     shield: '<path d="M12 3 5 6v5c0 4.4 2.8 8.3 7 10 4.2-1.7 7-5.6 7-10V6l-7-3Z"/><path d="m8 12 3 3 5-6"/>',
@@ -1324,8 +1321,73 @@ function findStudentEmail(frameDocument: Document): string {
   return frameDocument.querySelector('#correo a.style3')?.textContent?.trim() || 'correo@uanl.edu.mx';
 }
 
+function getCareerLinks(frameDocument: Document): HTMLAnchorElement[] {
+  return Array.from(
+    frameDocument.querySelectorAll<HTMLAnchorElement>("form[name='SelCarrera'] a[href^='javascript:']")
+  );
+}
+
 function findCareerCount(frameDocument: Document): number {
-  return frameDocument.querySelectorAll("form[name='SelCarrera'] a[href^='javascript:']").length;
+  return getCareerLinks(frameDocument).length;
+}
+
+function getCareerForm(frameDocument: Document): HTMLFormElement | null {
+  return frameDocument.querySelector<HTMLFormElement>("form[name='SelCarrera']");
+}
+
+function setCareerFormValue(form: HTMLFormElement, name: string, value: string): void {
+  const control = form.elements.namedItem(name);
+  if (
+    control instanceof HTMLInputElement ||
+    control instanceof HTMLSelectElement ||
+    control instanceof HTMLTextAreaElement
+  ) {
+    control.value = value;
+  }
+}
+
+function applyLegacyCareerHref(frameDocument: Document, careerLink: HTMLAnchorElement): boolean {
+  const form = getCareerForm(frameDocument);
+  const href = careerLink.getAttribute('href') ?? '';
+  if (!form || !href.toLowerCase().startsWith('javascript:')) return false;
+
+  const script = href.slice('javascript:'.length);
+  const assignmentPattern =
+    /(?:document(?:\.forms\[['"]SelCarrera['"]\]|\.SelCarrera)|SelCarrera)\.([A-Za-z0-9_]+)\.value\s*=\s*(['"])(.*?)\2/g;
+  let hasAssignments = false;
+  let match: RegExpExecArray | null;
+
+  while ((match = assignmentPattern.exec(script))) {
+    setCareerFormValue(form, match[1], match[3]);
+    hasAssignments = true;
+  }
+
+  if (!hasAssignments) return false;
+
+  form.submit();
+  return true;
+}
+
+function selectCareerByIndex(frameDocument: Document, index: number): boolean {
+  const careerLink = getCareerLinks(frameDocument)[index];
+  if (!careerLink) return false;
+
+  if (applyLegacyCareerHref(frameDocument, careerLink)) return true;
+  careerLink.click();
+  return true;
+}
+
+function openCareerListModal(wrapper: HTMLElement): void {
+  const modal = wrapper.querySelector<HTMLElement>('[data-siase-career-modal]');
+  if (!modal) return;
+
+  modal.hidden = false;
+  modal.querySelector<HTMLButtonElement>('[data-siase-career-index]')?.focus();
+}
+
+function closeCareerListModal(wrapper: HTMLElement): void {
+  const modal = wrapper.querySelector<HTMLElement>('[data-siase-career-modal]');
+  if (modal) modal.hidden = true;
 }
 
 function showPanel(frameDocument: Document, panelId: PanelId): void {
@@ -1387,7 +1449,19 @@ function handleCareerLogout(frameDocument: Document): void {
 }
 
 function createDashboardChrome(frameDocument: Document): HTMLElement {
-  const careerCount = findCareerCount(frameDocument);
+  const careerLinks = getCareerLinks(frameDocument);
+  const careerCount = careerLinks.length;
+  const careerListHtml = careerLinks
+    .map((link, index) => {
+      const label = link.textContent?.replace(/\s+/g, ' ').trim() || `Carrera ${index + 1}`;
+      return `
+        <button type="button" class="siase-career-modal__option" data-siase-career-index="${index}">
+          <span>${iconMarkup('book')}</span>
+          <strong>${escapeHtml(label)}</strong>
+        </button>
+      `;
+    })
+    .join('');
   const email = findStudentEmail(frameDocument);
   const wrapper = frameDocument.createElement('section');
   wrapper.className = 'siase-career-dashboard';
@@ -1397,16 +1471,7 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
         <span class="siase-career-brand__mark">${iconMarkup('shield')}</span>
         <strong>SIASE Plus</strong>
       </div>
-      <label class="siase-career-search">
-        ${iconMarkup('search')}
-        <input type="search" placeholder="Buscar servicios, carrera o plataforma" />
-      </label>
       <div class="siase-career-nav__actions">
-        <button type="button" class="siase-career-nav__icon" aria-label="Notificaciones">
-          ${iconMarkup('bell')}
-          <span>3</span>
-        </button>
-        <button type="button" class="siase-career-nav__icon" aria-label="Mensajes">${iconMarkup('message')}</button>
         <div class="siase-career-user">
           <span class="siase-career-avatar">U</span>
           <span><strong>Estudiante UANL</strong><em>${email}</em></span>
@@ -1414,6 +1479,24 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
         </div>
       </div>
     </nav>
+    <div class="siase-career-modal" data-siase-career-modal role="dialog" aria-modal="true" aria-labelledby="siase-career-modal-title" hidden>
+      <div class="siase-career-modal__backdrop" data-siase-career-modal-close></div>
+      <section class="siase-career-modal__card">
+        <div class="siase-career-modal__header">
+          <div>
+            <p class="siase-dashboard__eyebrow">SIASE</p>
+            <h2 id="siase-career-modal-title">Selecciona tu carrera</h2>
+          </div>
+          <button type="button" class="siase-career-modal__close" data-siase-career-modal-close aria-label="Cerrar listado de carreras">Cerrar</button>
+        </div>
+        <div class="siase-career-modal__list">
+          ${
+            careerListHtml ||
+            '<p class="siase-career-modal__empty">No se encontraron carreras disponibles en esta sesion.</p>'
+          }
+        </div>
+      </section>
+    </div>
     <div class="siase-career-grid">
       <aside class="siase-career-system-sidebar" aria-label="Acceso rapido del sistema">
         <section class="siase-career-section siase-career-quick-panel siase-career-quick-panel--sidebar siase-entrance">
@@ -1505,8 +1588,25 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     button.addEventListener('click', () => {
       const panelId = button.dataset.siaseCareerPanel as PanelId | undefined;
       if (!panelId || !PANEL_IDS.includes(panelId)) return;
+      if (panelId === 'siase') {
+        showPanel(frameDocument, panelId);
+        openCareerListModal(wrapper);
+        return;
+      }
       showPanel(frameDocument, panelId);
     });
+  });
+
+  wrapper.querySelector<HTMLElement>('[data-siase-career-modal]')?.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
+    const careerButton = target?.closest<HTMLButtonElement>('[data-siase-career-index]');
+    if (careerButton) {
+      const index = Number(careerButton.dataset.siaseCareerIndex);
+      if (Number.isInteger(index) && selectCareerByIndex(frameDocument, index)) closeCareerListModal(wrapper);
+      return;
+    }
+
+    if (target?.closest('[data-siase-career-modal-close]')) closeCareerListModal(wrapper);
   });
 
   wrapper
