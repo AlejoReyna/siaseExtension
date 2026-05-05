@@ -777,13 +777,13 @@ function replaceNexusWidget(frameDocument: Document, html: string): void {
   const widget = template.content.firstElementChild;
   if (!widget) return;
 
-  const quickPanel = frameDocument.querySelector('.siase-career-quick-panel');
-  if (quickPanel) {
-    quickPanel.insertAdjacentElement('afterend', widget);
+  const mainPanel = frameDocument.querySelector('.siase-career-main');
+  if (mainPanel) {
+    mainPanel.prepend(widget);
     return;
   }
 
-  frameDocument.querySelector('.siase-career-main')?.append(widget);
+  frameDocument.querySelector('.siase-career-dashboard')?.append(widget);
 }
 
 function renderizarItem(act: NexusActivity, esUrgente: boolean): string {
@@ -1391,8 +1391,8 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
       </div>
     </nav>
     <div class="siase-career-grid">
-      <main class="siase-career-main">
-        <section class="siase-career-section siase-career-quick-panel siase-entrance">
+      <aside class="siase-career-system-sidebar" aria-label="Acceso rapido del sistema">
+        <section class="siase-career-section siase-career-quick-panel siase-career-quick-panel--sidebar siase-entrance">
           <div class="siase-career-section__header">
             <h2>Acceso rapido</h2>
             <span>Servicios principales</span>
@@ -1421,6 +1421,8 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
           </div>
           <div class="siase-career-legacy-slot" data-siase-career-legacy-slot></div>
         </section>
+      </aside>
+      <main class="siase-career-main" aria-label="Proximas a vencer">
       </main>
       <aside class="siase-career-sidebar">
         <section class="siase-career-news-card">

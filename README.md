@@ -141,6 +141,10 @@ The latest build completed successfully.
 
 The `eselcarrera.htm` post-login landing page is handled by a dedicated content script (`src/content/career-landing.ts`) because it uses legacy tables, hover-swapped absolute panels, and CGI forms that must remain intact. It shares the center-frame theme tokens through `src/content/theme.ts` and scopes its CSS under `body.siase-plus-career-landing`.
 
+### Slim Left-Rail Career Design
+
+The career landing dashboard now moves the quick-access services into a slim fixed left rail inspired by the SIASE sidebar. The rail stays attached to the left edge at roughly 10% of the viewport width, while the central area focuses on the Nexus "Proximas a vencer" widget and the right column keeps institutional news.
+
 ---
 
 ## May 5, 2026 — Nexus Upcoming Activities Widget
