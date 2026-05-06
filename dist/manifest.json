@@ -80,7 +80,7 @@
     },
     {
       "js": [
-        "assets/career-landing.ts-loader-BtKRxZqA.js"
+        "assets/career-landing.ts-loader-BPsfrF2e.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/eselcarrera.htm*"
@@ -141,7 +141,7 @@
         "assets/theme-PNjHhAdA.js",
         "assets/center-frame.ts-D55DnxMS.js",
         "assets/kardex-D2H372DB.js",
-        "assets/career-landing.ts-B8hBydSF.js"
+        "assets/career-landing.ts-BH6wuAki.js"
       ],
       "use_dynamic_url": false
     },

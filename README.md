@@ -9,6 +9,7 @@ Chrome Extension Manifest V3 for modernizing the UANL SIASE portal at `https://d
 - Popup dashboard with cached grades and schedule.
 - Grade-change notifications from a background service worker.
 - Schedule parsing and `.ics` export.
+- Nexus “Próximas a vencer” widget on the career landing page, with a per-activity menu to add deadlines to **Google Calendar**, **Outlook / Microsoft 365** (web compose deep link), or **download an `.ics`** for Apple Calendar and other apps.
 - Searchable, categorized, pinnable sidebar menu.
 
 ## Setup
@@ -178,6 +179,18 @@ I ran a live diagnostic against real ENE-JUN 2026 semester data and found the wi
 **Silent error swallowing.** When the API returned a session-expired payload (`Code: 2004` or `Code: 2011`) with an HTTP 200 status, `extractCoursesFromNexusResponse` received that error object, found no courses in it, and the widget reported "No tienes cursos activos en Nexus" as if the student had no classes. I added a `data.Code` check right after `ConsultarCarpetaCursos` returns. On a session error, the widget now shows "Sesión de Nexus expirada. Recarga la página para reconectar", clears the local token, and fires a `CLEAR_NEXUS_SESSION` message so the service worker and the content script both clear their caches in sync.
 
 All five activities for the week appear after the four fixes.
+
+### Add to calendar (Google, Outlook, `.ics`)
+
+Each activity row includes a calendar affordance that opens a **fixed-position popover** (not a blind download). The student chooses:
+
+- **Google Calendar** — opens `calendar.google.com` with `action=TEMPLATE`, `text`, all-day `dates` (`YYYYMMDD/YYYYMMDD` with an exclusive end date, aligned with the ICS semantics), and `details` (materia, points when present, “Nexus UANL”).
+- **Outlook / Microsoft 365** — opens `outlook.office.com/calendar/0/deeplink/compose` with `subject`, `body`, `startdt` / `enddt` in **local** ISO-like form, and `allday=true` (UTC `toISOString()` dates are avoided so the day does not shift across time zones).
+- **Descargar `.ics`** — same VEVENT payload as before (`buildNexusActivityIcs`), via a short-lived blob URL and the anchor `download` attribute, for **Calendario** on macOS/iOS and other clients.
+
+The **`webcal://`** scheme only helps when the same feed is served from a stable **`https://` URL**; replacing a blob or data URL with `webcal://` does not apply here, so it is not used.
+
+Implementation notes: `agregarNexusActividadAlCalendario` in `career-landing.ts` takes the **activity index** for toggle behavior (second click on the same row closes the menu; another row replaces it). Clicks outside the menu remove it and detach the document listener via a `WeakMap`. Styles live under `.siase-cal-popover` in `src/content/styles/center.css`.
 
 ---
 

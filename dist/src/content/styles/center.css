@@ -1741,10 +1741,101 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
 
 .siase-nexus-widget__meta {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
+  gap: 6px 10px;
   margin-top: 2px;
   color: var(--muted-color);
   font-size: 11px;
+}
+
+.siase-nexus-widget__add-cal {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-muted) 92%, transparent);
+  color: var(--primary-color);
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.siase-nexus-widget__add-cal:hover {
+  background: color-mix(in srgb, var(--primary-color) 14%, var(--surface-muted));
+  border-color: color-mix(in srgb, var(--primary-color) 35%, var(--border-color));
+}
+
+.siase-nexus-widget__add-cal svg,
+.siase-nexus-widget__add-cal .siase-career-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.siase-nexus-widget__item--urgente .siase-nexus-widget__add-cal {
+  border-color: rgba(234, 88, 12, 0.28);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.siase-nexus-widget__item--urgente .siase-nexus-widget__add-cal:hover {
+  background: rgba(255, 232, 210, 0.95);
+  border-color: rgba(234, 88, 12, 0.45);
+}
+
+/* Menú contextual: Google / Outlook / .ics (widget Nexus) */
+.siase-cal-popover {
+  position: fixed;
+  z-index: 2147483646;
+  box-sizing: border-box;
+  min-width: 212px;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+  border-radius: 12px;
+  background: var(--surface-card, var(--surface-muted));
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 0 0 1px color-mix(in srgb, var(--border-color) 40%, transparent);
+}
+
+.siase-cal-popover__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.siase-cal-popover__option:hover {
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--surface-muted));
+  color: var(--primary-color);
+}
+
+.siase-cal-popover__option--download {
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--muted-color);
+}
+
+.siase-cal-popover__option--download:hover {
+  color: var(--primary-color);
 }
 
 .siase-nexus-widget__empty {

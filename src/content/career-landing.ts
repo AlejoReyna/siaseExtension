@@ -26,6 +26,9 @@ const NEXUS_TOKEN_EXPIRY_MARGIN_MS = 2 * 60 * 1000;
 const NEXUS_TOKEN_TTL_FALLBACK = 4 * 60 * 60 * 1000;
 const NEXUS_LOG_PREFIX = '[SIASE Plus Nexus]';
 
+/** Actividades renderizadas del widget Nexus por documento (iframe SIASE) para enlazar «Agregar al calendario». */
+const nexusActivitiesByDocument = new WeakMap<Document, NexusActivity[]>();
+
 interface NexusSessionStorage {
   Sesion?: {
     Token?: string;
@@ -637,6 +640,235 @@ function isSameCalendarDay(a: Date, b: Date): boolean {
   );
 }
 
+function formatIcsLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}${m}${day}`;
+}
+
+function formatUtcIcsDateTime(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  const h = String(d.getUTCHours()).padStart(2, '0');
+  const min = String(d.getUTCMinutes()).padStart(2, '0');
+  const s = String(d.getUTCSeconds()).padStart(2, '0');
+  return `${y}${m}${day}T${h}${min}${s}Z`;
+}
+
+function icsEscapeText(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r\n|\n|\r/g, '\\n');
+}
+
+function slugIcsFilenameFragment(text: string): string {
+  const base = text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 48);
+  return base || 'actividad';
+}
+
+/**
+ * Construye el contenido de un evento VEVENT (iCalendar) para una actividad Nexus.
+ * Usa fecha límite como evento de día completo en la zona horaria local del alumno.
+ */
+function buildNexusActivityIcs(act: NexusActivity): string {
+  const start = formatIcsLocalDate(act.fechaLimite);
+  const endDate = new Date(act.fechaLimite);
+  endDate.setDate(endDate.getDate() + 1);
+  const end = formatIcsLocalDate(endDate);
+
+  const materiaCorta =
+    act.materia.length > 48 ? `${act.materia.slice(0, 46)}…` : act.materia;
+  const summary = icsEscapeText(`${act.actividad} (${materiaCorta})`.slice(0, 200));
+  const descParts = [
+    `Materia: ${act.materia}`,
+    `Actividad: ${act.actividad}`,
+    typeof act.valor === 'number' ? `Valor: ${act.valor} pts` : '',
+    'Fuente: Nexus UANL'
+  ].filter(Boolean);
+  const description = icsEscapeText(descParts.join('\n'));
+
+  const uid = `nexus-${act.evidenciaId ?? 'na'}-${start}-${act.fechaLimite.getTime()}@siase-plus`;
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//SIASE Plus//Nexus//ES',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${formatUtcIcsDateTime(new Date())}`,
+    `DTSTART;VALUE=DATE:${start}`,
+    `DTEND;VALUE=DATE:${end}`,
+    `SUMMARY:${summary}`,
+    `DESCRIPTION:${description}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
+
+function nexusIcsFilename(act: NexusActivity): string {
+  return `nexus-${formatIcsLocalDate(act.fechaLimite)}-${slugIcsFilenameFragment(act.actividad)}.ics`;
+}
+
+/** Construye la URL de Google Calendar para crear un evento de un día completo. */
+function buildGoogleCalendarUrl(act: NexusActivity): string {
+  const start = formatIcsLocalDate(act.fechaLimite);
+  const endDate = new Date(act.fechaLimite);
+  endDate.setDate(endDate.getDate() + 1);
+  const end = formatIcsLocalDate(endDate);
+  const title = `${act.actividad} (${act.materia.slice(0, 48)})`;
+  const details = [
+    `Materia: ${act.materia}`,
+    typeof act.valor === 'number' ? `Valor: ${act.valor} pts` : '',
+    'Fuente: Nexus UANL',
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${start}/${end}`,
+    details,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+/** Fecha-hora local en formato ISO sin zona (Outlook Web la interpreta en horario local). */
+function formatOutlookLocalDateTime(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  const s = String(d.getSeconds()).padStart(2, '0');
+  return `${y}-${m}-${day}T${h}:${min}:${s}`;
+}
+
+/** Construye la URL de Outlook Web (deeplink compose) para un evento de día completo. */
+function buildOutlookCalendarUrl(act: NexusActivity): string {
+  const start = new Date(act.fechaLimite);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  const title = `${act.actividad} (${act.materia.slice(0, 80)})`;
+  const body = [
+    `Materia: ${act.materia}`,
+    typeof act.valor === 'number' ? `Valor: ${act.valor} pts` : '',
+    'Fuente: Nexus UANL'
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const params = new URLSearchParams({
+    subject: title,
+    body,
+    startdt: formatOutlookLocalDateTime(start),
+    enddt: formatOutlookLocalDateTime(end),
+    allday: 'true'
+  });
+  return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
+}
+
+const CAL_POPOVER_ID = 'siase-plus-cal-popover';
+const calPopoverOutsideHandlers = new WeakMap<HTMLElement, (e: MouseEvent) => void>();
+
+/** Cierra el popover de calendario si está abierto. */
+function cerrarCalPopover(doc: Document): void {
+  const el = doc.getElementById(CAL_POPOVER_ID);
+  if (!el) return;
+  const handler = calPopoverOutsideHandlers.get(el);
+  if (handler) doc.removeEventListener('click', handler, true);
+  calPopoverOutsideHandlers.delete(el);
+  el.remove();
+}
+
+/**
+ * Menú: Google Calendar, Outlook Web y descarga .ics (Calendario macOS, etc.).
+ * `webcal://` solo aplica a URLs públicas del .ics; aquí no sirve con blob en el cliente.
+ */
+function agregarNexusActividadAlCalendario(
+  act: NexusActivity,
+  frameWindow: Window,
+  anchorButton: HTMLElement,
+  activityIndex: number
+): void {
+  const doc = frameWindow.document;
+
+  const existing = doc.getElementById(CAL_POPOVER_ID);
+  if (existing?.dataset.siaseCalActivityIdx === String(activityIndex)) {
+    cerrarCalPopover(doc);
+    return;
+  }
+
+  cerrarCalPopover(doc);
+
+  const ics = buildNexusActivityIcs(act);
+  const filename = nexusIcsFilename(act);
+  const googleUrl = buildGoogleCalendarUrl(act);
+  const outlookUrl = buildOutlookCalendarUrl(act);
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+  frameWindow.setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
+
+  const popover = doc.createElement('div');
+  popover.id = CAL_POPOVER_ID;
+  popover.className = 'siase-cal-popover';
+  popover.setAttribute('role', 'menu');
+  popover.dataset.siaseCalActivityIdx = String(activityIndex);
+
+  const link = (href: string, label: string, className: string, downloadName?: string): HTMLAnchorElement => {
+    const a = doc.createElement('a');
+    a.className = className;
+    a.href = href;
+    a.textContent = label;
+    a.setAttribute('role', 'menuitem');
+    if (downloadName) {
+      a.download = downloadName;
+    } else {
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+    }
+    return a;
+  };
+
+  popover.append(
+    link(googleUrl, 'Google Calendar', 'siase-cal-popover__option'),
+    link(outlookUrl, 'Outlook / Microsoft 365', 'siase-cal-popover__option'),
+    link(blobUrl, 'Descargar .ics', 'siase-cal-popover__option siase-cal-popover__option--download', filename)
+  );
+
+  const rect = anchorButton.getBoundingClientRect();
+  const pad = 8;
+  const preferredLeft = rect.left;
+  const vw = frameWindow.innerWidth;
+  popover.style.top = `${rect.bottom + 6}px`;
+  popover.style.left = `${Math.max(pad, Math.min(preferredLeft, vw - 220 - pad))}px`;
+
+  doc.body.append(popover);
+
+  const onOutsideClick = (e: MouseEvent): void => {
+    const t = e.target as Node;
+    if (!popover.contains(t) && !anchorButton.contains(t)) {
+      cerrarCalPopover(doc);
+    }
+  };
+  calPopoverOutsideHandlers.set(popover, onOutsideClick);
+  frameWindow.setTimeout(() => doc.addEventListener('click', onOutsideClick, true), 0);
+
+  popover.addEventListener('click', () => {
+    frameWindow.setTimeout(() => cerrarCalPopover(doc), 200);
+  });
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -798,7 +1030,7 @@ function replaceNexusWidget(frameDocument: Document, html: string): void {
   frameDocument.querySelector('.siase-career-dashboard')?.append(widget);
 }
 
-function renderizarItem(act: NexusActivity, esUrgente: boolean): string {
+function renderizarItem(act: NexusActivity, esUrgente: boolean, activityIndex: number): string {
   const fecha = act.fechaLimite;
   const fechaStr = fecha.toLocaleDateString('es-MX', {
     weekday: 'short',
@@ -823,12 +1055,17 @@ function renderizarItem(act: NexusActivity, esUrgente: boolean): string {
       <div class="siase-nexus-widget__meta">
         <span>${escapeHtml(fechaStr)}</span>
         <span>${escapeHtml(puntos)}</span>
+        <button type="button" class="siase-nexus-widget__add-cal" data-siase-nexus-add-calendar data-siase-nexus-activity-idx="${activityIndex}" title="Elegir Google Calendar, Outlook o archivo .ics" aria-label="Opciones para agregar esta actividad Nexus al calendario">
+          ${iconMarkup('calendar')}
+        </button>
       </div>
     </article>
   `;
 }
 
 function renderizarWidget(frameDocument: Document, actividades: NexusActivity[]): void {
+  nexusActivitiesByDocument.set(frameDocument, actividades);
+
   const hoy = actividades.filter((actividad) => actividad.esHoy);
   const semana = actividades.filter((actividad) => !actividad.esHoy);
   let html = '<section class="siase-career-section siase-nexus-widget" id="siase-nexus-widget">';
@@ -850,7 +1087,7 @@ function renderizarWidget(frameDocument: Document, actividades: NexusActivity[])
     html += '<div class="siase-nexus-widget__empty">No hay actividades para hoy</div>';
   } else {
     hoy.forEach((act) => {
-      html += renderizarItem(act, true);
+      html += renderizarItem(act, true, actividades.indexOf(act));
     });
   }
   html += '</div>';
@@ -861,7 +1098,7 @@ function renderizarWidget(frameDocument: Document, actividades: NexusActivity[])
     html += '<div class="siase-nexus-widget__empty">No hay actividades proximas esta semana</div>';
   } else {
     semana.forEach((act) => {
-      html += renderizarItem(act, false);
+      html += renderizarItem(act, false, actividades.indexOf(act));
     });
   }
   html += '</div>';
@@ -871,6 +1108,7 @@ function renderizarWidget(frameDocument: Document, actividades: NexusActivity[])
 }
 
 function mostrarWidgetCargando(frameDocument: Document): void {
+  nexusActivitiesByDocument.delete(frameDocument);
   replaceNexusWidget(
     frameDocument,
     `
@@ -890,6 +1128,7 @@ function mostrarWidgetCargando(frameDocument: Document): void {
 }
 
 function mostrarWidgetError(frameDocument: Document, mensaje: string): void {
+  nexusActivitiesByDocument.delete(frameDocument);
   replaceNexusWidget(
     frameDocument,
     `
@@ -1883,6 +2122,20 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
   });
 
   wrapper.addEventListener('click', (event) => {
+    const nexusCalBtn = (event.target as Element | null)?.closest<HTMLButtonElement>(
+      '[data-siase-nexus-add-calendar]'
+    );
+    if (nexusCalBtn && wrapper.contains(nexusCalBtn)) {
+      event.preventDefault();
+      const idxRaw = nexusCalBtn.dataset.siaseNexusActivityIdx;
+      const idx = idxRaw !== undefined ? Number(idxRaw) : NaN;
+      const list = nexusActivitiesByDocument.get(frameDocument);
+      if (list && Number.isInteger(idx) && idx >= 0 && idx < list.length) {
+        agregarNexusActividadAlCalendario(list[idx], frameDocument.defaultView ?? window, nexusCalBtn, idx);
+      }
+      return;
+    }
+
     const careerButton = (event.target as Element | null)?.closest<HTMLButtonElement>(
       '[data-siase-career-index]'
     );
