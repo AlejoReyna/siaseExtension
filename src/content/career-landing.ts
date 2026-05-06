@@ -1435,14 +1435,6 @@ function selectCareerByIndex(frameDocument: Document, wrapper: HTMLElement, inde
   return true;
 }
 
-function openCareerListModal(wrapper: HTMLElement): void {
-  const modal = wrapper.querySelector<HTMLElement>('[data-siase-career-modal]');
-  if (!modal) return;
-
-  modal.hidden = false;
-  modal.querySelector<HTMLButtonElement>('[data-siase-career-index]')?.focus();
-}
-
 function closeCareerListModal(wrapper: HTMLElement): void {
   const modal = wrapper.querySelector<HTMLElement>('[data-siase-career-modal]');
   if (modal) modal.hidden = true;
@@ -1587,6 +1579,21 @@ function classifyLegacyStructure(frameDocument: Document): void {
   });
 }
 
+function buildCareerChoiceButtonsHtml(careerLinks: HTMLAnchorElement[], optionClass: string): string {
+  if (!careerLinks.length) return '';
+  return careerLinks
+    .map((link, index) => {
+      const label = link.textContent?.replace(/\s+/g, ' ').trim() || `Carrera ${index + 1}`;
+      return `
+        <button type="button" class="${optionClass}" data-siase-career-index="${index}">
+          <span>${iconMarkup('book')}</span>
+          <strong>${escapeHtml(label)}</strong>
+        </button>
+      `;
+    })
+    .join('');
+}
+
 function handleCareerLogout(frameDocument: Document): void {
   const logoutControl = Array.from(
     frameDocument.querySelectorAll<HTMLAnchorElement | HTMLButtonElement | HTMLInputElement>(
@@ -1613,17 +1620,11 @@ function handleCareerLogout(frameDocument: Document): void {
 function createDashboardChrome(frameDocument: Document): HTMLElement {
   const careerLinks = getCareerLinks(frameDocument);
   const careerCount = careerLinks.length;
-  const careerListHtml = careerLinks
-    .map((link, index) => {
-      const label = link.textContent?.replace(/\s+/g, ' ').trim() || `Carrera ${index + 1}`;
-      return `
-        <button type="button" class="siase-career-modal__option" data-siase-career-index="${index}">
-          <span>${iconMarkup('book')}</span>
-          <strong>${escapeHtml(label)}</strong>
-        </button>
-      `;
-    })
-    .join('');
+  const careerListHtml = buildCareerChoiceButtonsHtml(careerLinks, 'siase-career-modal__option');
+  const careerInlineListHtml = buildCareerChoiceButtonsHtml(
+    careerLinks,
+    'siase-career-inline-careers__option'
+  );
   const email = findStudentEmail(frameDocument);
   const wrapper = frameDocument.createElement('section');
   wrapper.className = 'siase-career-dashboard';
@@ -1658,42 +1659,40 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
         </div>
       </section>
     </div>
-    <div class="siase-career-grid">
-      <aside class="siase-career-system-sidebar" aria-label="Acceso rapido del sistema">
-        <section class="siase-career-section siase-career-quick-panel siase-career-quick-panel--sidebar siase-entrance">
-          <div class="siase-career-quick-grid" data-siase-career-rail-menu>
-            <button type="button" data-siase-career-panel="siase" class="siase-career-quick-card is-active" aria-label="Mi carrera">
-              <span class="siase-career-quick-card__icon siase-career-quick-card__icon--blue">${iconMarkup('book')}</span>
-              <strong>Mi carrera</strong>
-              <em>${careerCount || 1} disponibles</em>
-            </button>
-            <button type="button" data-siase-career-panel="correo" class="siase-career-quick-card" aria-label="Correo universitario">
-              <span class="siase-career-quick-card__icon siase-career-quick-card__icon--yellow">${iconMarkup('mail')}</span>
-              <strong>Correo</strong>
-              <em>Universitario</em>
-            </button>
-            <button type="button" data-siase-career-panel="nexus" class="siase-career-quick-card" aria-label="Nexus">
-              <span class="siase-career-quick-card__icon siase-career-quick-card__icon--green">${iconMarkup('video')}</span>
-              <strong>Nexus</strong>
-              <em>Clases en linea</em>
-            </button>
-            <button type="button" data-siase-career-panel="codice" class="siase-career-quick-card" aria-label="CODICE">
-              <span class="siase-career-quick-card__icon siase-career-quick-card__icon--cyan">${iconMarkup('services')}</span>
-              <strong>CODICE</strong>
-              <em>Biblioteca digital</em>
-            </button>
-          </div>
-          <div class="siase-career-legacy-slot" data-siase-career-legacy-slot></div>
-          <button type="button" class="siase-career-rail-logout" data-siase-career-logout aria-label="Cerrar sesion">
-            ${iconMarkup('logout')}
+    </div>
+    <aside class="siase-career-system-sidebar" aria-label="Acceso rapido del sistema">
+      <section class="siase-career-section siase-career-quick-panel siase-career-quick-panel--sidebar siase-entrance">
+        <div class="siase-career-quick-grid" data-siase-career-rail-menu>
+          <button type="button" data-siase-career-panel="siase" class="siase-career-quick-card is-active" aria-label="Ir a resumen y seleccion de carrera">
+            <span class="siase-career-quick-card__icon siase-career-quick-card__icon--blue">${iconMarkup('book')}</span>
+            <strong>Mi carrera</strong>
+            <em>${careerCount || 1} disponibles</em>
           </button>
-        </section>
-      </aside>
-      <main class="siase-career-main" aria-label="Proximas a vencer">
-        <section class="siase-career-content-host" data-siase-career-content-host aria-label="Contenido de SIASE"></section>
-      </main>
-      <aside class="siase-career-sidebar">
-        <section class="siase-career-insight-card" aria-label="Resumen academico">
+          <button type="button" data-siase-career-panel="correo" class="siase-career-quick-card" aria-label="Correo universitario">
+            <span class="siase-career-quick-card__icon siase-career-quick-card__icon--yellow">${iconMarkup('mail')}</span>
+            <strong>Correo</strong>
+            <em>Universitario</em>
+          </button>
+          <button type="button" data-siase-career-panel="nexus" class="siase-career-quick-card" aria-label="Nexus">
+            <span class="siase-career-quick-card__icon siase-career-quick-card__icon--green">${iconMarkup('video')}</span>
+            <strong>Nexus</strong>
+            <em>Clases en linea</em>
+          </button>
+          <button type="button" data-siase-career-panel="codice" class="siase-career-quick-card" aria-label="CODICE">
+            <span class="siase-career-quick-card__icon siase-career-quick-card__icon--cyan">${iconMarkup('services')}</span>
+            <strong>CODICE</strong>
+            <em>Biblioteca digital</em>
+          </button>
+        </div>
+        <div class="siase-career-legacy-slot" data-siase-career-legacy-slot></div>
+        <button type="button" class="siase-career-rail-logout" data-siase-career-logout aria-label="Cerrar sesion">
+          ${iconMarkup('logout')}
+        </button>
+      </section>
+    </aside>
+    <div class="siase-career-grid">
+      <div class="siase-career-grid__primary">
+        <section class="siase-career-insight-card siase-career-insight-wide" aria-label="Resumen academico y carrera">
           <div class="siase-career-insight-card__tabs" role="tablist" aria-label="Cambiar resumen academico">
             <button type="button" id="siase-insight-tab-progress" class="is-active" data-siase-insight-tab="progress" role="tab" aria-controls="siase-insight-panel-progress" aria-selected="true">
               Progreso
@@ -1702,47 +1701,65 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
               Mi promedio
             </button>
           </div>
-          <div class="siase-career-insight-card__panel is-active" id="siase-insight-panel-progress" data-siase-insight-panel="progress" role="tabpanel" aria-labelledby="siase-insight-tab-progress">
-            <div class="siase-career-insight-card__heading">
-              <p class="siase-dashboard__eyebrow">Avance global</p>
-              <strong>64%</strong>
+          <div class="siase-career-insight-wide__split">
+            <div class="siase-career-insight-wide__metrics">
+              <div class="siase-career-insight-card__panel is-active" id="siase-insight-panel-progress" data-siase-insight-panel="progress" role="tabpanel" aria-labelledby="siase-insight-tab-progress">
+                <div class="siase-career-insight-card__heading">
+                  <p class="siase-dashboard__eyebrow">Avance global</p>
+                  <strong>64%</strong>
+                </div>
+                <div class="siase-career-insight-progress" aria-hidden="true">
+                  <span style="width: 64%"></span>
+                </div>
+                <p>Progreso estimado del plan académico actual.</p>
+              </div>
+              <div class="siase-career-insight-card__panel" id="siase-insight-panel-average" data-siase-insight-panel="average" role="tabpanel" aria-labelledby="siase-insight-tab-average" hidden>
+                <p class="siase-dashboard__eyebrow">Mi promedio</p>
+                <div class="siase-career-average-display">
+                  <strong>92.4</strong>
+                  <span>Promedio general</span>
+                </div>
+                <p>Vista preparada para mostrar el promedio académico cuando esté disponible.</p>
+              </div>
             </div>
-            <div class="siase-career-insight-progress" aria-hidden="true">
-              <span style="width: 64%"></span>
-            </div>
-            <p>Progreso estimado del plan académico actual.</p>
-          </div>
-          <div class="siase-career-insight-card__panel" id="siase-insight-panel-average" data-siase-insight-panel="average" role="tabpanel" aria-labelledby="siase-insight-tab-average" hidden>
-            <p class="siase-dashboard__eyebrow">Mi promedio</p>
-            <div class="siase-career-average-display">
-              <strong>92.4</strong>
-              <span>Promedio general</span>
-            </div>
-            <p>Vista preparada para mostrar el promedio académico cuando esté disponible.</p>
+            <section class="siase-career-inline-careers" aria-labelledby="siase-inline-career-title">
+              <p class="siase-dashboard__eyebrow">Tu sesion</p>
+              <h3 id="siase-inline-career-title" class="siase-career-inline-careers__title">Selecciona tu carrera</h3>
+              <p class="siase-career-inline-careers__hint">${careerCount || 1} opciones academicas detectadas en tu sesion.</p>
+              <div class="siase-career-inline-careers__list" data-siase-career-inline-list role="list">
+                ${
+                  careerInlineListHtml ||
+                  '<p class="siase-career-inline-careers__empty">No se encontraron carreras disponibles en esta sesion.</p>'
+                }
+              </div>
+            </section>
           </div>
         </section>
-        <section class="siase-career-news-card">
-          <div class="siase-career-news-card__header">
-            <span>${iconMarkup('message')}</span>
-            <div>
-              <p class="siase-dashboard__eyebrow">Noticias</p>
-              <h2>Actualidad UANL</h2>
-            </div>
-          </div>
-          <article>
-            <strong>Consulta avisos institucionales</strong>
-            <em>Mantente atento a comunicados de Escolar y Archivo.</em>
-          </article>
-          <article>
-            <strong>Servicios digitales disponibles</strong>
-            <em>Correo universitario, Nexus y CODICE permanecen accesibles desde esta landing.</em>
-          </article>
-          <article>
-            <strong>Seleccion de carrera</strong>
-            <em>${careerCount || 1} opciones academicas detectadas en tu sesion.</em>
-          </article>
-        </section>
-      </aside>
+        <div class="siase-career-columns">
+          <main class="siase-career-main" aria-label="Proximas a vencer">
+            <section class="siase-career-content-host" data-siase-career-content-host aria-label="Contenido de SIASE"></section>
+          </main>
+          <aside class="siase-career-sidebar">
+            <section class="siase-career-news-card">
+              <div class="siase-career-news-card__header">
+                <span>${iconMarkup('message')}</span>
+                <div>
+                  <p class="siase-dashboard__eyebrow">Noticias</p>
+                  <h2>Actualidad UANL</h2>
+                </div>
+              </div>
+              <article>
+                <strong>Consulta avisos institucionales</strong>
+                <em>Mantente atento a comunicados de Escolar y Archivo.</em>
+              </article>
+              <article>
+                <strong>Servicios digitales disponibles</strong>
+                <em>Correo universitario, Nexus y CODICE permanecen accesibles desde esta landing.</em>
+              </article>
+            </section>
+          </aside>
+        </div>
+      </div>
     </div>
   `;
 
@@ -1752,23 +1769,29 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
       if (!panelId || !PANEL_IDS.includes(panelId)) return;
       if (panelId === 'siase') {
         showPanel(frameDocument, panelId);
-        openCareerListModal(wrapper);
+        wrapper.querySelector('.siase-career-insight-wide')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
         return;
       }
       showPanel(frameDocument, panelId);
     });
   });
 
-  wrapper.querySelector<HTMLElement>('[data-siase-career-modal]')?.addEventListener('click', (event) => {
-    const target = event.target as Element | null;
-    const careerButton = target?.closest<HTMLButtonElement>('[data-siase-career-index]');
-    if (careerButton) {
+  wrapper.addEventListener('click', (event) => {
+    const careerButton = (event.target as Element | null)?.closest<HTMLButtonElement>(
+      '[data-siase-career-index]'
+    );
+    if (careerButton && wrapper.contains(careerButton)) {
       const index = Number(careerButton.dataset.siaseCareerIndex);
       if (Number.isInteger(index) && selectCareerByIndex(frameDocument, wrapper, index))
         closeCareerListModal(wrapper);
-      return;
     }
+  });
 
+  wrapper.querySelector<HTMLElement>('[data-siase-career-modal]')?.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
     if (target?.closest('[data-siase-career-modal-close]')) closeCareerListModal(wrapper);
   });
 

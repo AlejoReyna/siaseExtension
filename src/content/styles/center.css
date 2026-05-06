@@ -807,6 +807,10 @@ body.siase-plus-career-landing > br {
   box-shadow: 0 16px 42px rgba(15, 23, 42, 0.08);
 }
 
+.siase-career-dashboard > .siase-career-grid {
+  min-height: 0;
+}
+
 .siase-career-siase-mode .siase-career-dashboard {
   grid-template-rows: minmax(0, 1fr);
   border: 0;
@@ -929,14 +933,43 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
 
 .siase-career-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.78fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 0;
-  height: auto;
   min-height: 0;
   margin-top: 0;
+  overflow: hidden;
+}
+
+.siase-career-grid__primary {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.siase-career-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.78fr);
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .siase-career-siase-mode .siase-career-grid {
+  height: 100%;
+}
+
+.siase-career-siase-mode .siase-career-grid__primary {
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
+}
+
+.siase-career-siase-mode .siase-career-insight-wide {
+  display: none !important;
+}
+
+.siase-career-siase-mode .siase-career-columns {
   grid-template-columns: minmax(0, 1fr);
   height: 100%;
 }
@@ -1913,6 +1946,129 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
   text-transform: uppercase;
 }
 
+.siase-career-insight-wide {
+  align-self: stretch;
+  min-height: 188px;
+}
+
+.siase-career-insight-wide__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
+  gap: 0 22px;
+  align-items: stretch;
+}
+
+.siase-career-insight-wide__metrics {
+  min-width: 0;
+}
+
+.siase-career-inline-careers {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  align-self: start;
+  min-width: 0;
+  margin: 4px 0 0;
+  padding-left: 22px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.siase-career-inline-careers .siase-dashboard__eyebrow {
+  margin: 0 0 4px;
+  color: #fff3c4;
+}
+
+.siase-career-inline-careers__title {
+  margin: 0;
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.siase-career-inline-careers__hint {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.siase-career-inline-careers__list {
+  display: grid;
+  gap: 8px;
+  max-height: min(218px, 38vh);
+  margin-top: 4px;
+  overflow-y: auto;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.siase-career-inline-careers__option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 13px;
+  font: 800 13px/1.3 Inter, ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.siase-career-inline-careers__option:hover,
+.siase-career-inline-careers__option:focus-visible {
+  outline: none;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 199, 44, 0.55);
+}
+
+.siase-career-inline-careers__option span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--secondary-color);
+  background: rgba(0, 26, 54, 0.42);
+  border-radius: 11px;
+}
+
+.siase-career-inline-careers__option span svg {
+  width: 18px;
+  height: 18px;
+}
+
+.siase-career-inline-careers__option strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.siase-career-inline-careers__empty {
+  margin: 0;
+  padding: 4px 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .siase-career-insight-wide__split {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .siase-career-inline-careers {
+    padding-left: 0;
+    border-left: 0;
+    padding-top: 16px;
+    margin-top: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+  }
+}
+
 .siase-career-news-card {
   display: grid;
   min-height: 281px;
@@ -2299,8 +2455,21 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-plus-career-layou
   }
 
   .siase-career-grid {
-    grid-template-columns: 1fr;
     height: auto;
+    overflow: visible;
+    grid-template-rows: auto;
+  }
+
+  .siase-career-grid__primary {
+    overflow: visible;
+    grid-template-rows: auto auto;
+    min-height: auto;
+  }
+
+  .siase-career-columns {
+    grid-template-columns: 1fr;
+    overflow: visible;
+    min-height: auto;
   }
 
   .siase-career-sidebar {
@@ -2323,7 +2492,7 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-plus-career-layou
     justify-content: flex-start;
   }
 
-  .siase-career-grid {
+  .siase-career-columns {
     grid-template-columns: 1fr;
   }
 }
