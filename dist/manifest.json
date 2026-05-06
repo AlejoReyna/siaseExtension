@@ -31,7 +31,7 @@
   "content_scripts": [
     {
       "js": [
-        "assets/frameset-injector.ts-loader-BUutNAn5.js"
+        "assets/frameset-injector.ts-loader-BUhGRCP6.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*default.htm*"
@@ -41,7 +41,7 @@
     },
     {
       "js": [
-        "assets/top-frame.ts-loader-BPr7KKeD.js"
+        "assets/top-frame.ts-loader-B1JtUyMU.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*maintop.htm*"
@@ -54,7 +54,7 @@
     },
     {
       "js": [
-        "assets/left-frame.ts-loader-Dp6KBTaw.js"
+        "assets/left-frame.ts-loader-DqP62eCv.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*mainleftdin01.htm*"
@@ -67,7 +67,7 @@
     },
     {
       "js": [
-        "assets/center-frame.ts-loader-B0p9b9rN.js"
+        "assets/center-frame.ts-loader-C2VfeP9F.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*maincenter.htm*"
@@ -80,7 +80,7 @@
     },
     {
       "js": [
-        "assets/career-landing.ts-loader-CG4HANVl.js"
+        "assets/career-landing.ts-loader-DKWYc_zQ.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/eselcarrera.htm*"
@@ -128,20 +128,20 @@
       "resources": [
         "src/content/styles/shadow.css",
         "icons/*.png",
-        "assets/single-view-layout-jrkgT93H.js",
+        "assets/single-view-layout-CbW7mO8X.js",
         "assets/center-layout-debug-bD1CAdlR.js",
-        "assets/frameset-injector.ts-gzxsFebv.js",
+        "assets/frameset-injector.ts-BbeVgwjl.js",
         "assets/dom-DNG4d4nx.js",
         "assets/storage-CGf68QnW.js",
-        "assets/top-frame.ts-SQSf4YdR.js",
+        "assets/top-frame.ts-DQfKB0Fm.js",
         "assets/jsx-runtime-18NIdeNA.js",
         "assets/menu-wWnSmKpE.js",
-        "assets/left-frame.ts-BlY_hLh6.js",
+        "assets/left-frame.ts-gH2RG3dt.js",
         "assets/center-ui-DwIi17yk.js",
         "assets/theme-PNjHhAdA.js",
-        "assets/center-frame.ts-CItu7Yoi.js",
+        "assets/center-frame.ts-CL-XKaz0.js",
         "assets/kardex-2VjTFpTC.js",
-        "assets/career-landing.ts-CvJ-5nk9.js"
+        "assets/career-landing.ts-CzsMW2j6.js"
       ],
       "use_dynamic_url": false
     },

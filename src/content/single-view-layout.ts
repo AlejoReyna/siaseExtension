@@ -50,7 +50,8 @@ function getFramesetDocument(): Document {
 
 function sidebarCols(rootDocument: Document): string {
   const width = rootDocument.defaultView?.innerWidth ?? window.innerWidth;
-  return width < 760 ? '76,*' : '280,*';
+  /* ~32% más estrecho que 280/76: columnas 202 / 55 */
+  return width < 760 ? '55,*' : '202,*';
 }
 
 function applyFrameGeometry(
@@ -77,7 +78,7 @@ function applyFrameGeometry(
   centerFrame?.setAttribute('scrolling', 'yes');
   rootDocument.documentElement.dataset.siasePlusLayout = layout;
   rootDocument.documentElement.dataset.siasePlusSidebar =
-    cols === '76,*' ? 'collapsed' : 'expanded';
+    cols === '55,*' ? 'collapsed' : 'expanded';
 
   if (centerLayoutDebugEnabled(rootDocument)) {
     try {

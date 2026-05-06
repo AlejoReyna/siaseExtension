@@ -1628,10 +1628,9 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
   const wrapper = frameDocument.createElement('section');
   wrapper.className = 'siase-career-dashboard';
   wrapper.innerHTML = `
-    <nav class="siase-career-nav" aria-label="SIASE Plus">
+    <nav class="siase-career-nav" aria-label="Resumen">
       <div class="siase-career-brand">
-        <span class="siase-career-brand__mark">${iconMarkup('shield')}</span>
-        <strong>SIASE Plus</strong>
+        <p class="siase-career-nav-brand-title">Resumen</p>
       </div>
       <div class="siase-career-nav__actions">
         <div class="siase-career-user">

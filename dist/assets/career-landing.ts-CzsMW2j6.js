@@ -37,10 +37,9 @@ import{n as e,t}from"./storage-CGf68QnW.js";import{t as n}from"./menu-wWnSmKpE.j
           <strong>${_(n)}</strong>
         </button>
       `}).join(``),i=we(e),o=e.createElement(`section`);o.className=`siase-career-dashboard`,o.innerHTML=`
-    <nav class="siase-career-nav" aria-label="SIASE Plus">
+    <nav class="siase-career-nav" aria-label="Resumen">
       <div class="siase-career-brand">
-        <span class="siase-career-brand__mark">${g(`shield`)}</span>
-        <strong>SIASE Plus</strong>
+        <p class="siase-career-nav-brand-title">Resumen</p>
       </div>
       <div class="siase-career-nav__actions">
         <div class="siase-career-user">

@@ -782,7 +782,7 @@ body.siase-plus-center a {
 }
 
 body.siase-plus-career-landing {
-  --career-rail-width: clamp(62px, 6vw, 84px);
+  --career-rail-width: clamp(45px, 4.32vw, 60px);
   padding: 0 0 0 var(--career-rail-width) !important;
   background:
     radial-gradient(circle at top right, rgba(255, 199, 44, 0.18), transparent 32rem),
@@ -823,7 +823,7 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   align-items: center;
   gap: 18px;
   min-height: 72px;
-  padding: 12px 16px;
+  padding: 0 16px;
   background: var(--surface-color);
   border: 0;
   border-bottom: 1px solid var(--border-color);
@@ -846,6 +846,25 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   gap: 10px;
   color: var(--primary-color);
   font-size: 18px;
+}
+
+.siase-career-nav-brand-title {
+  margin: 0;
+  padding: 7px 14px 7px 12px;
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--secondary-color) 24%, var(--surface-color));
+  border-left: 4px solid var(--secondary-color);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 900;
+  font-style: normal;
+  line-height: 1.25;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-title {
+  background: color-mix(in srgb, var(--secondary-color) 18%, var(--surface-color));
 }
 
 .siase-career-brand__mark,
@@ -1128,8 +1147,8 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   padding: 16px 0;
   overflow: hidden auto;
   background:
-    radial-gradient(circle at 50% 0%, rgba(255, 199, 44, 0.18), transparent 28%),
-    linear-gradient(180deg, #063967, #002e5d 48%, #001a36);
+    radial-gradient(circle at 50% 0%, rgba(255, 199, 44, 0.12), transparent 28%),
+    #05386f;
   border: 0;
   border-radius: 0;
   box-shadow: 18px 0 42px rgba(0, 26, 54, 0.24);
@@ -2339,7 +2358,7 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-plus-career-layou
   }
 }
 
-/* Center frame is often ~600–700px wide with a 280px sidebar; 720px was too high and hid the right column. */
+/* Center frame con rail ~202px (frameset); sidebar colapsada ~55px */
 @media (max-width: 560px) {
   .siase-dashboard__main {
     grid-template-columns: 1fr;
