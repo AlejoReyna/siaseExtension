@@ -21,6 +21,7 @@ const KARDEX_URL = 'https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/econkdx01.htm
 const KARDEX_BG_FRAME_NAME = 'siase-plus-kardex-bg-frame';
 const KARDEX_CACHE_TTL = 60 * 60 * 1000; // 1 hora
 const KARDEX_LOAD_TIMEOUT_MS = 15_000;
+
 /** Margen de seguridad: invalidar 2 min antes de que Nexus expire la sesión */
 const NEXUS_TOKEN_EXPIRY_MARGIN_MS = 2 * 60 * 1000;
 /** Fallback conservador cuando la sesión no trae FechaInicio/TiempoRestante */
@@ -131,6 +132,8 @@ function iconMarkup(name: string): string {
     calendar:
       '<path d="M7 3v4M17 3v4M4 9h16"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 13h.01M12 13h.01M16 13h.01"/>',
     chevron: '<path d="m6 9 6 6 6-6"/>',
+    chevronLeft: '<path d="m14 18-6-6 6-6"/>',
+    chevronRight: '<path d="m10 18 6-6-6-6"/>',
     download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
     mail: '<path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/>',
     message: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/>',
@@ -1594,6 +1597,49 @@ function buildCareerChoiceButtonsHtml(careerLinks: HTMLAnchorElement[], optionCl
     .join('');
 }
 
+function attachCareerCarouselNavigation(wrapper: HTMLElement, careerLinks: HTMLAnchorElement[]): void {
+  const labels = careerLinks.map((link, index) => {
+    return link.textContent?.replace(/\s+/g, ' ').trim() || `Carrera ${index + 1}`;
+  });
+  const careerCount = labels.length;
+  const root = wrapper.querySelector<HTMLElement>('[data-siase-career-carousel-root]');
+  if (!root || careerCount < 1) return;
+
+  const prev = root.querySelector<HTMLButtonElement>('[data-siase-career-carousel-prev]');
+  const next = root.querySelector<HTMLButtonElement>('[data-siase-career-carousel-next]');
+  const titleEl = root.querySelector<HTMLElement>('[data-siase-career-carousel-title]');
+  const counter = root.querySelector<HTMLElement>('[data-siase-career-carousel-counter]');
+  const accessBtn = wrapper.querySelector<HTMLButtonElement>(
+    '[data-siase-career-access-from-progress]'
+  );
+
+  let idx = 0;
+
+  const sync = (): void => {
+    const label = labels[idx];
+    if (titleEl) titleEl.textContent = label;
+    titleEl?.setAttribute('title', label);
+    if (counter) counter.textContent = `${idx + 1} / ${careerCount}`;
+    if (prev) prev.disabled = idx <= 0;
+    if (next) next.disabled = idx >= careerCount - 1;
+    if (accessBtn) {
+      accessBtn.dataset.siaseCareerIndex = String(idx);
+      accessBtn.hidden = false;
+    }
+  };
+
+  prev?.addEventListener('click', () => {
+    idx = Math.max(0, idx - 1);
+    sync();
+  });
+  next?.addEventListener('click', () => {
+    idx = Math.min(careerCount - 1, idx + 1);
+    sync();
+  });
+
+  sync();
+}
+
 function handleCareerLogout(frameDocument: Document): void {
   const logoutControl = Array.from(
     frameDocument.querySelectorAll<HTMLAnchorElement | HTMLButtonElement | HTMLInputElement>(
@@ -1621,10 +1667,8 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
   const careerLinks = getCareerLinks(frameDocument);
   const careerCount = careerLinks.length;
   const careerListHtml = buildCareerChoiceButtonsHtml(careerLinks, 'siase-career-modal__option');
-  const careerInlineListHtml = buildCareerChoiceButtonsHtml(
-    careerLinks,
-    'siase-career-inline-careers__option'
-  );
+  const firstCareerTitle =
+    careerLinks[0]?.textContent?.replace(/\s+/g, ' ').trim() || 'Carrera';
   const email = findStudentEmail(frameDocument);
   const wrapper = frameDocument.createElement('section');
   wrapper.className = 'siase-career-dashboard';
@@ -1659,7 +1703,6 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
         </div>
       </section>
     </div>
-    </div>
     <aside class="siase-career-system-sidebar" aria-label="Acceso rapido del sistema">
       <section class="siase-career-section siase-career-quick-panel siase-career-quick-panel--sidebar siase-entrance">
         <div class="siase-career-quick-grid" data-siase-career-rail-menu>
@@ -1693,46 +1736,70 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     <div class="siase-career-grid">
       <div class="siase-career-grid__primary">
         <section class="siase-career-insight-card siase-career-insight-wide" aria-label="Resumen academico y carrera">
-          <div class="siase-career-insight-card__tabs" role="tablist" aria-label="Cambiar resumen academico">
-            <button type="button" id="siase-insight-tab-progress" class="is-active" data-siase-insight-tab="progress" role="tab" aria-controls="siase-insight-panel-progress" aria-selected="true">
-              Progreso
-            </button>
-            <button type="button" id="siase-insight-tab-average" data-siase-insight-tab="average" role="tab" aria-controls="siase-insight-panel-average" aria-selected="false">
-              Mi promedio
-            </button>
-          </div>
-          <div class="siase-career-insight-wide__split">
-            <div class="siase-career-insight-wide__metrics">
-              <div class="siase-career-insight-card__panel is-active" id="siase-insight-panel-progress" data-siase-insight-panel="progress" role="tabpanel" aria-labelledby="siase-insight-tab-progress">
-                <div class="siase-career-insight-card__heading">
-                  <p class="siase-dashboard__eyebrow">Avance global</p>
-                  <strong>64%</strong>
-                </div>
-                <div class="siase-career-insight-progress" aria-hidden="true">
-                  <span style="width: 64%"></span>
-                </div>
-                <p>Progreso estimado del plan académico actual.</p>
+          <div class="siase-career-insight-wide__split" data-siase-career-carousel-root aria-live="polite">
+            <div class="siase-career-insight-wide__career-block" aria-labelledby="siase-inline-career-title">
+              <h3 id="siase-inline-career-title" class="siase-career-inline-careers__title">Selecciona tu carrera</h3>
+              ${
+                careerCount === 0
+                  ? '<p class="siase-career-inline-careers__empty">No se encontraron carreras disponibles en esta sesion.</p>'
+                  : `
+              <div class="siase-career-carousel siase-career-carousel--title-row">
+                <button type="button" class="siase-career-carousel__arrow siase-career-carousel__arrow--sm" data-siase-career-carousel-prev aria-label="Carrera anterior">
+                  ${iconMarkup('chevronLeft')}
+                </button>
+                <p class="siase-career-carousel__title" data-siase-career-carousel-title>${escapeHtml(firstCareerTitle)}</p>
               </div>
-              <div class="siase-career-insight-card__panel" id="siase-insight-panel-average" data-siase-insight-panel="average" role="tabpanel" aria-labelledby="siase-insight-tab-average" hidden>
-                <p class="siase-dashboard__eyebrow">Mi promedio</p>
-                <div class="siase-career-average-display">
-                  <strong>92.4</strong>
-                  <span>Promedio general</span>
+              <p class="siase-career-carousel__counter" data-siase-career-carousel-counter aria-live="polite">1 / ${careerCount}</p>
+              `
+              }
+            </div>
+            <div class="siase-career-insight-wide__metrics">
+              <div class="siase-career-insight-wide__panel-stack">
+                <div class="siase-career-insight-wide__tabs-rail">
+                  <div class="siase-career-insight-card__tabs siase-career-insight-card__tabs--compact" role="tablist" aria-label="Cambiar resumen academico">
+                    <button type="button" id="siase-insight-tab-progress" class="is-active" data-siase-insight-tab="progress" role="tab" aria-controls="siase-insight-panel-progress" aria-selected="true">
+                      Progreso
+                    </button>
+                    <button type="button" id="siase-insight-tab-average" data-siase-insight-tab="average" role="tab" aria-controls="siase-insight-panel-average" aria-selected="false">
+                      Mi promedio
+                    </button>
+                  </div>
                 </div>
-                <p>Vista preparada para mostrar el promedio académico cuando esté disponible.</p>
+                <div class="siase-career-insight-card__panel is-active" id="siase-insight-panel-progress" data-siase-insight-panel="progress" role="tabpanel" aria-labelledby="siase-insight-tab-progress">
+                  <strong class="siase-career-insight-wide__progress-percent">64%</strong>
+                  <p class="siase-career-insight-wide__progress-footnote">Progreso estimado del plan académico actual.</p>
+                  <div class="siase-career-insight-progress" aria-hidden="true">
+                    <span style="width: 64%"></span>
+                  </div>
+                  <button
+                    type="button"
+                    class="siase-career-insight-wide__access-career"
+                    data-siase-career-access-from-progress
+                    data-siase-career-index="0"
+                    ${careerCount === 0 ? 'hidden' : ''}
+                  >
+                    Acceder a esta carrera
+                  </button>
+                </div>
+                <div class="siase-career-insight-card__panel" id="siase-insight-panel-average" data-siase-insight-panel="average" role="tabpanel" aria-labelledby="siase-insight-tab-average" hidden>
+                  <p class="siase-dashboard__eyebrow">Mi promedio</p>
+                  <div class="siase-career-average-display">
+                    <strong>92.4</strong>
+                    <span>Promedio general</span>
+                  </div>
+                  <p>Vista preparada para mostrar el promedio académico cuando esté disponible.</p>
+                </div>
               </div>
             </div>
-            <section class="siase-career-inline-careers" aria-labelledby="siase-inline-career-title">
-              <p class="siase-dashboard__eyebrow">Tu sesion</p>
-              <h3 id="siase-inline-career-title" class="siase-career-inline-careers__title">Selecciona tu carrera</h3>
-              <p class="siase-career-inline-careers__hint">${careerCount || 1} opciones academicas detectadas en tu sesion.</p>
-              <div class="siase-career-inline-careers__list" data-siase-career-inline-list role="list">
-                ${
-                  careerInlineListHtml ||
-                  '<p class="siase-career-inline-careers__empty">No se encontraron carreras disponibles en esta sesion.</p>'
-                }
-              </div>
-            </section>
+            ${
+              careerCount === 0
+                ? ''
+                : `
+            <button type="button" class="siase-career-carousel__arrow siase-career-carousel__arrow--sm siase-career-carousel__arrow--trail" data-siase-career-carousel-next aria-label="Carrera siguiente">
+              ${iconMarkup('chevronRight')}
+            </button>
+            `
+            }
           </div>
         </section>
         <div class="siase-career-columns">
@@ -1830,6 +1897,8 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     });
   });
 
+  attachCareerCarouselNavigation(wrapper, careerLinks);
+
   return wrapper;
 }
 
@@ -1866,9 +1935,10 @@ function updateCreditProgressUI(data: CreditProgressUIData): void {
   // ── Panel de PROGRESO
   const progressPanel = document.querySelector('#siase-insight-panel-progress');
   if (progressPanel) {
-    const progressStrong = progressPanel.querySelector(
-      '.siase-career-insight-card__heading strong'
-    );
+    const progressStrong =
+      progressPanel.querySelector<HTMLElement>('.siase-career-insight-wide__progress-percent') ??
+      progressPanel.querySelector<HTMLElement>('.siase-career-insight-card__heading strong');
+
     if (progressStrong) {
       progressStrong.textContent = data.isEmpty
         ? '—'
@@ -1882,13 +1952,6 @@ function updateCreditProgressUI(data: CreditProgressUIData): void {
       progressBar.style.width = data.isEmpty
         ? '0%'
         : `${Math.min(Math.round(data.progressPercent), 100)}%`;
-    }
-
-    const progressDesc = progressPanel.querySelector('p:last-of-type');
-    if (progressDesc) {
-      progressDesc.textContent = data.isEmpty
-        ? 'Visita tu kardex para ver tu progreso de créditos.'
-        : `${data.totalCreditsCompleted} / ${data.totalCreditsRequired} créditos completados.`;
     }
   }
 
