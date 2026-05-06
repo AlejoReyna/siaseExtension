@@ -18,9 +18,7 @@ const NEXUS_CACHE_KEY = 'siase_nexus_widget_cache';
 const NEXUS_CACHE_TTL = 60 * 60 * 1000;
 
 const KARDEX_URL = 'https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/econkdx01.htm';
-const KARDEX_BG_FRAME_NAME = 'siase-plus-kardex-bg-frame';
 const KARDEX_CACHE_TTL = 60 * 60 * 1000; // 1 hora
-const KARDEX_LOAD_TIMEOUT_MS = 15_000;
 
 /** Margen de seguridad: invalidar 2 min antes de que Nexus expire la sesión */
 const NEXUS_TOKEN_EXPIRY_MARGIN_MS = 2 * 60 * 1000;
@@ -1519,11 +1517,42 @@ function navigateSiaseCenter(wrapper: HTMLElement, href: string): void {
   });
 }
 
+function captureSiaseSessionParams(rootDocument: Document): void {
+  // Extrae los query params de la URL del frame "top" (maintop.htm?HTMLUsuario=...&HTMLtrim=...&...)
+  // Todos los frames de default.htm comparten los mismos 10 params de sesión de WebSpeed.
+  const topFrame = rootDocument.querySelector<HTMLFrameElement>('frame[name="top"]');
+  const src = topFrame?.src ?? topFrame?.getAttribute('src') ?? '';
+  if (!src) return;
+
+  try {
+    const url = new URL(src, 'https://deimos.dgi.uanl.mx');
+    if (!url.searchParams.has('HTMLtrim')) return;
+
+    const params: Record<string, string> = {};
+    url.searchParams.forEach((value, key) => {
+      params[key] = value;
+    });
+
+    console.log(KARDEX_LOG, 'params de sesión SIASE capturados', {
+      HTMLUsuario: params['HTMLUsuario'],
+      HTMLtrim: params['HTMLtrim'],
+      keys: Object.keys(params),
+    });
+
+    void setStorageValue('siaseSessionParams', params);
+  } catch (err) {
+    console.warn(KARDEX_LOG, 'no se pudieron capturar params de sesión', err);
+  }
+}
+
 function hydrateSiaseShellFromFrame(wrapper: HTMLElement, frame: HTMLIFrameElement): boolean {
   const rootDocument = getSiaseFrameDocument(frame);
   if (!rootDocument) return false;
 
   isolateSiaseCenterFrame(rootDocument);
+
+  // Capturar los params de sesión de WebSpeed (necesarios para fetch del kardex)
+  captureSiaseSessionParams(rootDocument);
 
   const leftDocument = getNamedFrameDocument(rootDocument, 'left');
   if (!leftDocument) return false;
@@ -1539,11 +1568,21 @@ function handleSiaseFrameLoad(wrapper: HTMLElement, frame: HTMLIFrameElement): v
   setSiaseMode(wrapper);
 
   let attempts = 0;
+  let kardexTriggered = false;
   const maxAttempts = 40;
   const interval = window.setInterval(() => {
     attempts += 1;
     const hydrated = hydrateSiaseShellFromFrame(wrapper, frame);
-    if (hydrated || attempts >= maxAttempts) window.clearInterval(interval);
+    if (hydrated || attempts >= maxAttempts) {
+      window.clearInterval(interval);
+      // Una vez que el shell está hidratado (params capturados), lanzar el fetch del kardex
+      // en background si aún no se hizo (el primer intento al cargar la página falló por falta de params)
+      if (hydrated && !kardexTriggered) {
+        kardexTriggered = true;
+        const frameDoc = wrapper.ownerDocument;
+        void fetchKardexInBackground(frameDoc);
+      }
+    }
   }, 250);
 }
 
@@ -1608,18 +1647,16 @@ function attachCareerCarouselNavigation(wrapper: HTMLElement, careerLinks: HTMLA
   const prev = root.querySelector<HTMLButtonElement>('[data-siase-career-carousel-prev]');
   const next = root.querySelector<HTMLButtonElement>('[data-siase-career-carousel-next]');
   const titleEl = root.querySelector<HTMLElement>('[data-siase-career-carousel-title]');
-  const counter = root.querySelector<HTMLElement>('[data-siase-career-carousel-counter]');
   const accessBtn = wrapper.querySelector<HTMLButtonElement>(
     '[data-siase-career-access-from-progress]'
   );
 
-  let idx = 0;
+  let idx = careerCount - 1;
 
   const sync = (): void => {
     const label = labels[idx];
     if (titleEl) titleEl.textContent = label;
     titleEl?.setAttribute('title', label);
-    if (counter) counter.textContent = `${idx + 1} / ${careerCount}`;
     if (prev) prev.disabled = idx <= 0;
     if (next) next.disabled = idx >= careerCount - 1;
     if (accessBtn) {
@@ -1667,8 +1704,9 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
   const careerLinks = getCareerLinks(frameDocument);
   const careerCount = careerLinks.length;
   const careerListHtml = buildCareerChoiceButtonsHtml(careerLinks, 'siase-career-modal__option');
-  const firstCareerTitle =
-    careerLinks[0]?.textContent?.replace(/\s+/g, ' ').trim() || 'Carrera';
+  const initialCarouselIdx = careerCount > 0 ? careerCount - 1 : 0;
+  const initialCarouselTitle =
+    careerLinks[initialCarouselIdx]?.textContent?.replace(/\s+/g, ' ').trim() || 'Carrera';
   const email = findStudentEmail(frameDocument);
   const wrapper = frameDocument.createElement('section');
   wrapper.className = 'siase-career-dashboard';
@@ -1735,10 +1773,29 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     </aside>
     <div class="siase-career-grid">
       <div class="siase-career-grid__primary">
-        <section class="siase-career-insight-card siase-career-insight-wide" aria-label="Resumen academico y carrera">
+        <section class="siase-career-insight-card siase-career-insight-wide" aria-label="Resumen academico y carrera" aria-labelledby="siase-inline-career-title">
           <div class="siase-career-insight-wide__split" data-siase-career-carousel-root aria-live="polite">
-            <div class="siase-career-insight-wide__career-block" aria-labelledby="siase-inline-career-title">
-              <h3 id="siase-inline-career-title" class="siase-career-inline-careers__title">Selecciona tu carrera</h3>
+            <h3 id="siase-inline-career-title" class="siase-career-inline-careers__title siase-career-insight-wide__heading">Selecciona tu carrera</h3>
+            <div class="siase-career-insight-wide__tabs-rail">
+              <div class="siase-career-insight-card__tabs siase-career-insight-card__tabs--compact" role="tablist" aria-label="Cambiar resumen academico">
+                <button type="button" id="siase-insight-tab-progress" class="is-active" data-siase-insight-tab="progress" role="tab" aria-controls="siase-insight-metric-panel" aria-selected="true">
+                  Progreso
+                </button>
+                <button type="button" id="siase-insight-tab-average" data-siase-insight-tab="average" role="tab" aria-controls="siase-insight-metric-panel" aria-selected="false">
+                  Mi promedio
+                </button>
+              </div>
+            </div>
+            ${
+              careerCount === 0
+                ? '<span class="siase-career-insight-wide__trail-slot" aria-hidden="true"></span>'
+                : `
+            <button type="button" class="siase-career-carousel__arrow siase-career-carousel__arrow--sm siase-career-carousel__arrow--trail" data-siase-career-carousel-next aria-label="Carrera siguiente">
+              ${iconMarkup('chevronRight')}
+            </button>
+            `
+            }
+            <div class="siase-career-insight-wide__career-column">
               ${
                 careerCount === 0
                   ? '<p class="siase-career-inline-careers__empty">No se encontraron carreras disponibles en esta sesion.</p>'
@@ -1747,59 +1804,38 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
                 <button type="button" class="siase-career-carousel__arrow siase-career-carousel__arrow--sm" data-siase-career-carousel-prev aria-label="Carrera anterior">
                   ${iconMarkup('chevronLeft')}
                 </button>
-                <p class="siase-career-carousel__title" data-siase-career-carousel-title>${escapeHtml(firstCareerTitle)}</p>
+                <p class="siase-career-carousel__title" data-siase-career-carousel-title>${escapeHtml(initialCarouselTitle)}</p>
               </div>
-              <p class="siase-career-carousel__counter" data-siase-career-carousel-counter aria-live="polite">1 / ${careerCount}</p>
+              <button
+                type="button"
+                class="siase-career-insight-wide__access-career"
+                data-siase-career-access-from-progress
+                data-siase-career-index="${initialCarouselIdx}"
+              >
+                Acceder a esta carrera
+              </button>
               `
               }
             </div>
             <div class="siase-career-insight-wide__metrics">
               <div class="siase-career-insight-wide__panel-stack">
-                <div class="siase-career-insight-wide__tabs-rail">
-                  <div class="siase-career-insight-card__tabs siase-career-insight-card__tabs--compact" role="tablist" aria-label="Cambiar resumen academico">
-                    <button type="button" id="siase-insight-tab-progress" class="is-active" data-siase-insight-tab="progress" role="tab" aria-controls="siase-insight-panel-progress" aria-selected="true">
-                      Progreso
-                    </button>
-                    <button type="button" id="siase-insight-tab-average" data-siase-insight-tab="average" role="tab" aria-controls="siase-insight-panel-average" aria-selected="false">
-                      Mi promedio
-                    </button>
-                  </div>
-                </div>
-                <div class="siase-career-insight-card__panel is-active" id="siase-insight-panel-progress" data-siase-insight-panel="progress" role="tabpanel" aria-labelledby="siase-insight-tab-progress">
+                <div
+                  class="siase-career-insight-card__panel siase-career-insight-wide__metric-panel is-active"
+                  id="siase-insight-metric-panel"
+                  role="tabpanel"
+                  aria-labelledby="siase-insight-tab-progress"
+                  data-kardex-progress="64"
+                  data-kardex-average="92.4"
+                >
                   <strong class="siase-career-insight-wide__progress-percent">64%</strong>
-                  <p class="siase-career-insight-wide__progress-footnote">Progreso estimado del plan académico actual.</p>
-                  <div class="siase-career-insight-progress" aria-hidden="true">
-                    <span style="width: 64%"></span>
+                  <div class="siase-career-insight-wide__metric-slot">
+                    <div class="siase-career-insight-progress" aria-hidden="true">
+                      <span style="width: 64%"></span>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    class="siase-career-insight-wide__access-career"
-                    data-siase-career-access-from-progress
-                    data-siase-career-index="0"
-                    ${careerCount === 0 ? 'hidden' : ''}
-                  >
-                    Acceder a esta carrera
-                  </button>
-                </div>
-                <div class="siase-career-insight-card__panel" id="siase-insight-panel-average" data-siase-insight-panel="average" role="tabpanel" aria-labelledby="siase-insight-tab-average" hidden>
-                  <p class="siase-dashboard__eyebrow">Mi promedio</p>
-                  <div class="siase-career-average-display">
-                    <strong>92.4</strong>
-                    <span>Promedio general</span>
-                  </div>
-                  <p>Vista preparada para mostrar el promedio académico cuando esté disponible.</p>
                 </div>
               </div>
             </div>
-            ${
-              careerCount === 0
-                ? ''
-                : `
-            <button type="button" class="siase-career-carousel__arrow siase-career-carousel__arrow--sm siase-career-carousel__arrow--trail" data-siase-career-carousel-next aria-label="Carrera siguiente">
-              ${iconMarkup('chevronRight')}
-            </button>
-            `
-            }
           </div>
         </section>
         <div class="siase-career-columns">
@@ -1881,20 +1917,17 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     const button = (event.target as Element | null)?.closest<HTMLButtonElement>(
       '[data-siase-insight-tab]'
     );
-    const target = button?.dataset.siaseInsightTab;
-    if (!target) return;
+    const target = button?.getAttribute('data-siase-insight-tab');
+    if (!target || !button || !insightCard.contains(button)) return;
 
     insightCard.querySelectorAll<HTMLButtonElement>('[data-siase-insight-tab]').forEach((tab) => {
-      const isActive = tab.dataset.siaseInsightTab === target;
+      const isActive = tab.getAttribute('data-siase-insight-tab') === target;
       tab.classList.toggle('is-active', isActive);
       tab.setAttribute('aria-selected', String(isActive));
     });
 
-    insightCard.querySelectorAll<HTMLElement>('[data-siase-insight-panel]').forEach((panel) => {
-      const isActive = panel.dataset.siaseInsightPanel === target;
-      panel.classList.toggle('is-active', isActive);
-      panel.hidden = !isActive;
-    });
+    const metricPanel = insightCard.querySelector<HTMLElement>('#siase-insight-metric-panel');
+    if (metricPanel) applyInsightMetricView(metricPanel);
   });
 
   attachCareerCarouselNavigation(wrapper, careerLinks);
@@ -1923,6 +1956,8 @@ function injectDashboardChrome(frameDocument: Document): void {
 
 // ── Kardex snapshot → dashboard ───────────────────────────────────────────────
 
+const KARDEX_LOG = '[SIASE Plus Kardex]';
+
 interface CreditProgressUIData {
   progressPercent: number;
   totalCreditsCompleted: number;
@@ -1931,60 +1966,81 @@ interface CreditProgressUIData {
   isEmpty: boolean;
 }
 
-function updateCreditProgressUI(data: CreditProgressUIData): void {
-  // ── Panel de PROGRESO
-  const progressPanel = document.querySelector('#siase-insight-panel-progress');
-  if (progressPanel) {
-    const progressStrong =
-      progressPanel.querySelector<HTMLElement>('.siase-career-insight-wide__progress-percent') ??
-      progressPanel.querySelector<HTMLElement>('.siase-career-insight-card__heading strong');
+/** Un solo bloque métrico: las pestañas cambian el dato del titular; la barra solo se muestra en Progreso. */
+function applyInsightMetricView(metricPanel: HTMLElement): void {
+  const card = metricPanel.closest('.siase-career-insight-card');
+  const activeTab =
+    card?.querySelector<HTMLButtonElement>('[data-siase-insight-tab].is-active')?.getAttribute(
+      'data-siase-insight-tab'
+    ) ?? 'progress';
 
-    if (progressStrong) {
-      progressStrong.textContent = data.isEmpty
-        ? '—'
-        : `${Math.round(data.progressPercent)}%`;
-    }
+  metricPanel.setAttribute(
+    'aria-labelledby',
+    activeTab === 'average' ? 'siase-insight-tab-average' : 'siase-insight-tab-progress'
+  );
 
-    const progressBar = progressPanel.querySelector(
-      '.siase-career-insight-progress span'
-    );
-    if (progressBar instanceof HTMLElement) {
-      progressBar.style.width = data.isEmpty
-        ? '0%'
-        : `${Math.min(Math.round(data.progressPercent), 100)}%`;
-    }
+  const headline = metricPanel.querySelector<HTMLElement>('.siase-career-insight-wide__progress-percent');
+  const bar = metricPanel.querySelector<HTMLElement>('.siase-career-insight-progress span');
+  const metricSlot = metricPanel.querySelector<HTMLElement>('.siase-career-insight-wide__metric-slot');
+
+  if (metricSlot) {
+    metricSlot.style.display = activeTab === 'average' ? 'none' : '';
   }
 
-  // ── Panel de PROMEDIO
-  const averagePanel = document.querySelector('#siase-insight-panel-average');
-  if (averagePanel) {
-    const averageStrong = averagePanel.querySelector(
-      '.siase-career-average-display strong'
-    );
-    if (averageStrong) {
-      averageStrong.textContent =
-        data.isEmpty || data.average === undefined
-          ? '—'
-          : data.average.toFixed(1);
-    }
+  const progressRaw = metricPanel.dataset.kardexProgress;
+  const averageRaw = metricPanel.dataset.kardexAverage;
+  const progressPct =
+    progressRaw !== undefined && progressRaw !== '' ? Number(progressRaw) : Number.NaN;
+  const average =
+    averageRaw !== undefined && averageRaw !== '' ? Number(averageRaw) : Number.NaN;
 
-    const averageDesc = averagePanel.querySelector('p:last-of-type');
-    if (averageDesc) {
-      averageDesc.textContent = data.isEmpty
-        ? 'Visita tu kardex para ver tu promedio académico.'
-        : 'Promedio general calculado desde tu kardex.';
+  if (activeTab === 'progress') {
+    if (headline) {
+      headline.textContent = Number.isFinite(progressPct) ? `${Math.round(progressPct)}%` : '—';
+    }
+    if (bar) {
+      bar.style.width = Number.isFinite(progressPct)
+        ? `${Math.min(Math.round(progressPct), 100)}%`
+        : '0%';
+    }
+  } else {
+    if (headline) {
+      headline.textContent =
+        Number.isFinite(average) && average >= 0 ? average.toFixed(1) : '—';
     }
   }
 }
 
-const KARDEX_LOG = '[SIASE Plus Kardex]';
+function updateCreditProgressUI(data: CreditProgressUIData): void {
+  console.log(KARDEX_LOG, 'updateCreditProgressUI llamado', data);
+
+  const metricPanel = document.querySelector<HTMLElement>('#siase-insight-metric-panel');
+  console.log(KARDEX_LOG, 'metricPanel', metricPanel ? 'encontrado' : 'NO ENCONTRADO (#siase-insight-metric-panel)');
+
+  if (!metricPanel) return;
+
+  if (data.isEmpty) {
+    delete metricPanel.dataset.kardexProgress;
+    delete metricPanel.dataset.kardexAverage;
+  } else {
+    metricPanel.dataset.kardexProgress = String(data.progressPercent);
+    if (data.average !== undefined && Number.isFinite(data.average)) {
+      metricPanel.dataset.kardexAverage = String(data.average);
+    } else {
+      delete metricPanel.dataset.kardexAverage;
+    }
+  }
+
+  applyInsightMetricView(metricPanel);
+}
 
 async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
   // Fast path: servir desde cache si es reciente
   const cached = await getStorageValue('kardexSnapshot');
   if (cached) {
     const ageMs = Date.now() - new Date(cached.capturedAt).getTime();
-    const isUsable = cached.totalCreditsCompleted > 0 || cached.average !== undefined;
+    const averageIsValid = cached.average === undefined || (cached.average >= 0 && cached.average <= 100);
+    const isUsable = (cached.totalCreditsCompleted > 0 || cached.average !== undefined) && averageIsValid;
     if (ageMs < KARDEX_CACHE_TTL && isUsable) {
       console.log(KARDEX_LOG, 'usando snapshot cacheado', {
         ageMs,
@@ -1992,7 +2048,29 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
         totalCreditsCompleted: cached.totalCreditsCompleted,
         progressPercent: cached.progressPercent,
         average: cached.average,
+        totalEntries: cached.entries.length,
       });
+
+      // ── Desglose del promedio para verificación
+      const passedEntries = cached.entries.filter((e) => e.passed && e.score !== undefined);
+      const scoreSum = passedEntries.reduce((sum, e) => sum + (e.score ?? 0), 0);
+      console.log(KARDEX_LOG, 'desglose del promedio', {
+        materiasAprobadas: passedEntries.length,
+        sumaCalificaciones: scoreSum,
+        promedioCalculado: passedEntries.length > 0
+          ? Math.round((scoreSum / passedEntries.length) * 100) / 100
+          : undefined,
+        promedioGuardado: cached.average,
+      });
+      console.table(
+        passedEntries.map((e) => ({
+          sem: e.semesterInPlan,
+          clave: e.subjectKey,
+          materia: e.subject.slice(0, 35),
+          calificación: e.score,
+        }))
+      );
+
       updateCreditProgressUI({ ...cached, isEmpty: false });
       return;
     }
@@ -2008,85 +2086,56 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
     console.log(KARDEX_LOG, 'sin snapshot previo, cargando kardex en background');
   }
 
-  // Slow path: cargar el kardex en un iframe oculto (mismo origen → acceso directo al DOM)
-  await new Promise<void>((resolve) => {
-    let iframe = frameDocument.querySelector<HTMLIFrameElement>(
-      `iframe[name="${KARDEX_BG_FRAME_NAME}"]`
-    );
-    if (!iframe) {
-      iframe = frameDocument.createElement('iframe');
-      iframe.name = KARDEX_BG_FRAME_NAME;
-      iframe.style.cssText =
-        'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;border:0;';
-      iframe.setAttribute('aria-hidden', 'true');
-      // allow-same-origin: acceso a cookies de sesión de SIASE
-      // allow-scripts: JS del kardex corre normalmente
-      // Sin allow-modals: alert/confirm/prompt quedan suprimidos silenciosamente
-      iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-      frameDocument.body.append(iframe);
+  // Slow path: fetch + DOMParser (sin iframe, sin JS del kardex, sin alert())
+  // econkdx01.htm requiere los 10 query params de sesión WebSpeed (HTMLtrim, HTMLUsuario, etc.)
+  // que se capturan de la URL del frame "top" cuando el usuario selecciona carrera.
+  const sessionParams = await getStorageValue('siaseSessionParams');
+  if (!sessionParams || !sessionParams['HTMLtrim']) {
+    console.warn(KARDEX_LOG, 'params de sesión SIASE no disponibles — selecciona una carrera primero');
+    return;
+  }
+
+  const kardexUrl = `${KARDEX_URL}?${new URLSearchParams(sessionParams).toString()}`;
+
+  try {
+    console.log(KARDEX_LOG, 'fetch kardex', {
+      url: KARDEX_URL,
+      HTMLUsuario: sessionParams['HTMLUsuario'],
+      HTMLtrim: sessionParams['HTMLtrim'],
+    });
+    const response = await fetch(kardexUrl, { credentials: 'include' });
+    if (!response.ok) {
+      console.warn(KARDEX_LOG, 'fetch falló', { status: response.status });
+      return;
+    }
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    const rowCount = doc.querySelectorAll('tr').length;
+    const bodyPreview = doc.body?.textContent?.replace(/\s+/g, ' ').trim().slice(0, 200) ?? '';
+    console.log(KARDEX_LOG, 'fetch completado', { rowCount, bodyPreview });
+
+    if (rowCount === 0) {
+      console.warn(KARDEX_LOG, 'documento vacío — sesión expirada o error de servidor');
+      return;
     }
 
-    console.log(KARDEX_LOG, 'iframe oculto creado, cargando URL', { url: KARDEX_URL });
+    const summary = parseKardexSummary(doc);
+    console.log(KARDEX_LOG, 'kardex parseado', {
+      entries: summary.entries.length,
+      totalCreditsCompleted: summary.totalCreditsCompleted,
+      progressPercent: summary.progressPercent,
+      average: summary.average,
+      primerEntrada: summary.entries[0],
+      ultimaEntrada: summary.entries[summary.entries.length - 1],
+    });
 
-    const cleanup = (iframeEl: HTMLIFrameElement): void => {
-      iframeEl.remove();
-      resolve();
-    };
-
-    const timer = setTimeout(() => {
-      console.warn(KARDEX_LOG, 'timeout: el iframe no cargó en', KARDEX_LOAD_TIMEOUT_MS, 'ms');
-      cleanup(iframe!);
-    }, KARDEX_LOAD_TIMEOUT_MS);
-
-    iframe.addEventListener(
-      'load',
-      () => {
-        clearTimeout(timer);
-        try {
-          const iframeDoc = iframe!.contentDocument;
-          const iframeUrl = iframe!.contentWindow?.location.href ?? '(no acceso)';
-          const iframeTitle = iframeDoc?.title ?? '(sin título)';
-          const bodyText = iframeDoc?.body?.innerText?.slice(0, 300) ?? '(sin body)';
-          const rowCount = iframeDoc?.querySelectorAll('tr').length ?? 0;
-
-          console.log(KARDEX_LOG, 'iframe load event', {
-            url: iframeUrl,
-            title: iframeTitle,
-            rowCount,
-            bodyPreview: bodyText,
-          });
-
-          if (!iframeDoc || rowCount === 0) {
-            console.warn(KARDEX_LOG, 'documento vacío o sin filas — sesión expirada o error de servidor');
-            cleanup(iframe!);
-            return;
-          }
-
-          const summary = parseKardexSummary(iframeDoc);
-          console.log(KARDEX_LOG, 'kardex parseado', {
-            entries: summary.entries.length,
-            totalCreditsCompleted: summary.totalCreditsCompleted,
-            progressPercent: summary.progressPercent,
-            average: summary.average,
-            primerEntrada: summary.entries[0],
-            ultimaEntrada: summary.entries[summary.entries.length - 1],
-          });
-
-          void setStorageValue('kardexSnapshot', summary).then(() => {
-            console.log(KARDEX_LOG, 'snapshot guardado en storage, actualizando UI');
-            updateCreditProgressUI({ ...summary, isEmpty: false });
-          });
-        } catch (err) {
-          console.error(KARDEX_LOG, 'error al acceder al iframe o parsear', err);
-        } finally {
-          cleanup(iframe!);
-        }
-      },
-      { once: true }
-    );
-
-    iframe.src = KARDEX_URL;
-  });
+    await setStorageValue('kardexSnapshot', summary);
+    console.log(KARDEX_LOG, 'snapshot guardado en storage, actualizando UI');
+    updateCreditProgressUI({ ...summary, isEmpty: false });
+  } catch (err) {
+    console.error(KARDEX_LOG, 'error al fetch/parsear kardex', err);
+  }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

@@ -1,17 +1,20 @@
 export interface KardexEntry {
   id: string;
-  subject: string;
-  credits?: number;  // créditos de esta materia
-  score?: number;    // calificación (0–100)
-  period?: string;   // semestre/período (ej. "2024-1")
+  subjectKey: string;       // j=2: clave de materia (ej. "605")
+  subject: string;          // j=3: nombre de materia
+  semesterInPlan: string;   // j=0: semestre del plan ("1"–"9")
+  score?: number;           // primera calificación aprobatoria (≥70) en j=4..j=9
+  labScore?: number;        // calificación de laboratorio en j=10 (si es número)
+  isLabSubject: boolean;    // true si j=10 === "L" (la materia ES laboratorio)
+  passed: boolean;          // true si score !== undefined
   rawText: string;
 }
 
 export interface KardexSummary {
   entries: KardexEntry[];
-  totalCreditsCompleted: number; // extraído de fila de totales del DOM
-  totalCreditsRequired: number;  // constante: 220
-  progressPercent: number;       // Math.min((completados / 220) * 100, 100)
-  average: number | undefined;   // promedio general del DOM; undefined si no se encontró
-  capturedAt: string;            // ISO 8601
+  totalCreditsCompleted: number;  // extraído del DIV "TOTAL...: 138 de 220"
+  totalCreditsRequired: number;   // extraído del mismo DIV (normalmente 220)
+  progressPercent: number;        // (completados / requeridos) * 100
+  average: number | undefined;    // promedio simple de materias aprobadas
+  capturedAt: string;             // ISO 8601
 }

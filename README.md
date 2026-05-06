@@ -187,57 +187,76 @@ I wired the credit progress bar and academic average on the dashboard to real da
 
 ### New types and storage key
 
-I created `src/types/kardex.ts` with two interfaces: `KardexEntry` (one row from the kardex table, carrying `subject`, `credits`, `score`, and `period`) and `KardexSummary` (the full result of a parse run, with `totalCreditsCompleted`, `totalCreditsRequired`, `progressPercent`, `average`, and `capturedAt`). I added `kardexSnapshot: KardexSummary` to the `StorageSchema` in `src/types/storage.ts`, keeping `KardexSummary` in its own file to avoid a circular import between the parser and storage modules.
+I created `src/types/kardex.ts` with `KardexEntry` (one parsed subject row: plan semester, course key, name, first passing score across opportunity columns, optional lab score/lab flag, `passed`, raw row text) and `KardexSummary` (`entries`, credit totals and `progressPercent` from the `TOTAL … : X de Y` body snippet, **simple** `average` across passing subjects, `capturedAt`). I added `kardexSnapshot: KardexSummary` to the `StorageSchema` in `src/types/storage.ts`, keeping `KardexSummary` in its own file to avoid a circular import between the parser and storage modules.
 
 ### Parser
 
-I rewrote `src/utils/parser/kardex.ts` around a new `parseKardexSummary` function. The parser walks every `<tr>` in the kardex document and classifies each row into one of three buckets: a totals row (matched by keywords like "total", "suma", or "acumulado" in the first cell or anywhere in the row), a promedio row (matched by a label like "Promedio: 87.40" or by a standalone two-decimal number between 60 and 100 in a row with no subject name), or a subject row. From the totals row it extracts the accumulated credit count. From subject rows it extracts the subject name, score, and credit hours using conservative regex patterns that avoid confusing a credit count with a score. If no totals row is found, it falls back to summing credits from passed subjects. If no promedio row is found, it falls back to an arithmetic average of all non-zero scores.
+`parseKardexSummary` in `src/utils/parser/kardex.ts` matches the live SIASE kardex markup rather than generic row heuristics:
+
+- **Credits**: Reads accumulated vs required credits from plain body text using a `TOTAL … : X de Y` pattern. Per-course credit columns are not relied on in the main table (they are not consistently present there).
+- **Subject rows**: Finds the primary table via a header cell `Sem.` and parses semester-in-plan, course key, course name, six opportunity columns, and the lab column.
+- **Grade used**: First numeric grade ≥ 70 read left-to-right across opportunity columns; that row counts as passed for the average.
+- **Average**: Simple arithmetic mean of passing subjects’ scores (not credit-weighted), rounded to two decimals. If the mean falls outside 0–100 it is treated as a parse error and omitted from the UI.
+- **Progress percent**: `(completedCredits / requiredCredits) × 100`, capped at 100 (required defaults when the pattern is missing).
 
 ### Page handler and dashboard connection
 
-`src/content/pages/kardex-page.ts` now calls `parseKardexSummary`, persists the result with `setStorageValue('kardexSnapshot', ...)`, and fires a fire-and-forget `REFRESH_KARDEX` message to the service worker, following the same pattern as the grades page handler.
+`src/content/pages/kardex-page.ts` still calls `parseKardexSummary` when the student opens the kardex page, persists with `setStorageValue('kardexSnapshot', ...)`, and mirrors the grades-page pattern including a `REFRESH_KARDEX` hint to the service worker.
 
-On the dashboard side, `career-landing.ts` gained a `fetchKardexInBackground` function that runs immediately after the dashboard renders. It first checks storage for a usable snapshot younger than one hour. A snapshot is considered usable only if `totalCreditsCompleted > 0` or `average` is defined, so a bad parse from a previous run does not get served indefinitely. If the snapshot is missing, expired, or invalid, the function creates a hidden one-pixel iframe pointing directly at `econkdx01.htm` and waits for it to load. Since both pages are on the same origin, the function accesses `iframe.contentDocument` directly, runs `parseKardexSummary` on it, saves the result, and updates the two dashboard panels: `#siase-insight-panel-progress` (percentage and progress bar) and `#siase-insight-panel-average` (the numeric average).
+On `eselcarrera.htm`, `fetchKardexInBackground` in `career-landing.ts` runs after the shell renders. It reuses a cached snapshot when younger than about one hour and structurally usable (`totalCreditsCompleted > 0` or `average` defined, average in range when present). Otherwise it builds `econkdx01.htm` with WebSpeed session query params from storage (`siaseSessionParams`), **`fetch`es** the HTML with credentials, parses it with **`DOMParser`** (no in-page kardex script), runs `parseKardexSummary`, saves the snapshot, and calls **`updateCreditProgressUI`**.
 
-### Suppressing the portal alert
+The strip uses a **single** metric surface `#siase-insight-metric-panel` with `data-kardex-progress` and `data-kardex-average`. **`applyInsightMetricView`** switches the headline and bar according to the pill (**Progreso** → percentage + visible bar; **Mi promedio** → decimal average with the **bar hidden**). This avoids maintaining two stacked tab panels and dodges `display`/`[hidden]` specificity bugs.
 
-The kardex page calls `alert()` when certain session variables that are normally embedded by the server are absent. Those variables are missing when the page loads inside an iframe rather than through the portal's menu navigation. The data still parses correctly because the session cookie is valid and the page content loads, but the alert blocked the UI. I fixed this by adding `sandbox="allow-same-origin allow-scripts"` to the hidden iframe. The `allow-same-origin` flag keeps the session cookie accessible and preserves same-origin DOM access. The `allow-scripts` flag lets the page's JavaScript run. Omitting `allow-modals` causes the browser to silently discard any `alert`, `confirm`, or `prompt` call from within the iframe, with no interception code required.
+### Legacy note on kardex alerts
+
+Earlier experiments loaded kardex in a sandboxed iframe to suppress portal `alert()` noise. The **fetch + static parse** path does not execute that page’s scripts during background refresh, so those alerts are not triggered there.
 
 ---
 
 ## May 6, 2026 — Career landing banner and resumen layout
 
-Work focused on the injected dashboard on `eselcarrera.htm` (`src/content/career-landing.ts` + `src/content/styles/center.css`), the full-width **Resumen** strip above the two-column main area (upcoming tasks + news).
+Work focused on the injected dashboard on `eselcarrera.htm` (`src/content/career-landing.ts` + `src/content/styles/center.css`): the full-width **Resumen** strip above the two-column main area (upcoming tasks + news).
 
 ### Horizontal strip and structure
 
-- The **progress / Mi promedio** insight card spans the content width. The **left SIASE rail** is a sibling of the main grid (not inside the two-column layout) so the strip can use the full width next to the narrow rail.
-- In **SIASE embed mode** (`body` class `siase-career-siase-mode`), that strip is hidden so only the embedded SIASE center frame fills the shell.
+- The **insight** card spans the content width. The **left SIASE rail** stays a sibling of the main grid so the strip can breathe next to the narrow rail.
+- In **SIASE embed mode** (`body.siase-career-siase-mode`), the strip is hidden so only the embedded SIASE center frame fills the shell.
 
-### Career selection without a modal
+### Grid layout (two logical rows)
 
-- Careers are chosen **inline**: a **carousel-style control** updates the visible career title (`[data-siase-career-carousel-title]`) with **previous / next** arrows. The **`[data-siase-career-carousel-next]`** control sits on the **far right** of the strip; the **previous** arrow and title sit in the **left block** under “Selecciona tu carrera”.
-- **“Acceder a esta carrera”** is a single button under the **progress bar** in the progress tab panel; it shares the same `selectCareerByIndex` flow as the modal (the modal list remains for parity, but the rail “Mi carrera” action scrolls to this strip instead of opening the modal).
+- **Row 1:** **“Selecciona tu carrera”** (larger, high-contrast title) is **horizontally aligned** with the **Progreso | Mi promedio** pill. The carousel **next** arrow sits in the third grid column and spans the strip height beside those rows.
+- **Row 2:** **Left column** — career carousel (previous arrow, dynamic title with extra gap after the arrow, trailing next arrow remains on the far right of row 1 layout as implemented). **Compact yellow “Acceder a esta carrera”** sits **under** the carousel row (not inside the metrics column); it stays **`inline`** width rather than full bleed.
+- **Row 2:** **Right column** — **one** `#siase-insight-metric-panel` fed by kardex data. **`applyInsightMetricView`** binds the pill state to the headline + optional bar (see Kardex section above).
 
-### Progress tab content (Kardex-driven)
+### Career carousel behavior
 
-- **`updateCreditProgressUI`** drives the **percentage** and **bar width** from the kardex snapshot. The strip no longer shows separate “Avance global” / credits text lines in the UI; emphasis is on **%**, the short footnote, bar, and access button.
-- The **Progreso | Mi promedio** pill sits **above** the large percentage (and the same rail is above the average block when that tab is active).
+- Initial selection defaults to the **last** career link returned by `getCareerLinks` (most recent in SIASE order).
+- The **`N / M`** carousel index caption was removed.
+- Modal career list remains available; inline carousel + access button still call the same `selectCareerByIndex` flow.
 
-### Visual cleanup
+### Metrics column alignment
 
-- Removed the **vertical divider** between career block and metrics.
-- Removed the **“Tu sesión”** eyebrow.
-- **Banner height** was tightened (reduced padding, smaller progress bar in the wide card, compact metrics column).
-- An experimental **triangular image wedge** on the right edge of the banner was **removed** after iteration; a data-URL placeholder existed briefly and is no longer used.
+- The **metrics** and **career** columns **stretch** to equal row height. Inside the metrics stack, the **progress bar** uses **`margin-top: auto`** so it lines up with the **access** button row on the left (both sit at the bottom of the stretched row).
+- Footnote copy (“Progreso estimado…”, kardex subtitle under promedio) was removed for a cleaner strip.
+
+### Insight pills and JavaScript
+
+- Tab buttons use **`getAttribute('data-siase-insight-tab')`**; both **`aria-controls`** point at **`siase-insight-metric-panel`**.
+- **`updateCreditProgressUI`** writes `dataset.kardexProgress` / `dataset.kardexAverage` and calls **`applyInsightMetricView`**.
+
+### Visual cleanup called out earlier
+
+- Removed the **vertical divider** between career block and metrics and the **“Tu sesión”** eyebrow.
+- **Banner height** stays compact (tight padding, **8px** bar in the wide card).
+- Experimental **triangular wedge** asset was dropped.
 
 ### Responsive behavior
 
-- Below ~**900px**, the strip stacks: career block, metrics, then the trailing next arrow aligned to the **end** of the row where applicable.
+- Below ~**900px**, the strip stacks (heading, pills, carousel/access, metrics). Mobile tweaks reset auto-margins so the stacked layout does not preserve the desktop “bar aligned with button” trick.
 
 ### Related files
 
-- **`src/content/career-landing.ts`**: dashboard HTML for the strip, `attachCareerCarouselNavigation`, insight tab handling, `updateCreditProgressUI` panel selectors.
-- **`src/content/styles/center.css`**: `.siase-career-insight-wide`, grid `siase-career-insight-wide__split`, carousel title row, trail arrow, panel stack with tabs-first column layout, access button full width under the bar.
+- **`src/content/career-landing.ts`**: strip HTML, `attachCareerCarouselNavigation`, insight pill listener, `applyInsightMetricView`, `updateCreditProgressUI`, `fetchKardexInBackground`.
+- **`src/content/styles/center.css`**: `.siase-career-insight-wide__split` two-row grid, heading + tabs rail placement, `.siase-career-insight-wide__career-column` / `__metrics` stretch flex, `.siase-career-insight-wide__metric-slot`, compact access button, carousel gaps.
 
-Earlier in the same timeframe, frame and rail sizing tokens were also tightened (e.g. `src/content/single-view-layout.ts`, `shadow.css`, `left.css`) so the narrow rail and career landing padding stay consistent with the frameset.
+Earlier in the same timeframe, frame and rail sizing tokens were also tightened (`src/content/single-view-layout.ts`, `shadow.css`, `left.css`) so the narrow rail and career landing padding stay consistent with the frameset.

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "SIASE Plus",
+  "name": "Oh My SIASE",
   "version": "0.1.0",
-  "description": "Modern UI, quick dashboard, grade alerts, calendar export, and smart navigation for UANL SIASE.",
-  "action": { "default_title": "SIASE Plus", "default_popup": "src/popup/popup.html" },
+  "description": "Un proyecto estudiantil para mejorar la experiencia de usuario de los alumnos de la UANL.",
+  "action": { "default_title": "Oh My SIASE", "default_popup": "src/popup/popup.html" },
   "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
   "background": { "service_worker": "src/background/service-worker.ts", "type": "module" },
   "permissions": ["alarms", "notifications", "storage", "downloads"],

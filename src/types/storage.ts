@@ -12,6 +12,8 @@ export interface StorageSchema {
   menuItems: MenuItem[];
   pinnedMenuIds: string[];
   kardexSnapshot: KardexSummary;
+  /** Query params de sesión de WebSpeed capturados del frame top/left de default.htm */
+  siaseSessionParams: Record<string, string>;
 }
 
 export type StorageKey = keyof StorageSchema;

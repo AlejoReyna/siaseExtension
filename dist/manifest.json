@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "SIASE Plus",
+  "name": "Oh My SIASE",
   "version": "0.1.0",
-  "description": "Modern UI, quick dashboard, grade alerts, calendar export, and smart navigation for UANL SIASE.",
+  "description": "Un proyecto estudiantil para mejorar la experiencia de usuario de los alumnos de la UANL.",
   "action": {
-    "default_title": "SIASE Plus",
+    "default_title": "Oh My SIASE",
     "default_popup": "src/popup/popup.html"
   },
   "icons": {
@@ -41,7 +41,7 @@
     },
     {
       "js": [
-        "assets/top-frame.ts-loader-B1JtUyMU.js"
+        "assets/top-frame.ts-loader-BJhe4ON0.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*maintop.htm*"
@@ -54,7 +54,7 @@
     },
     {
       "js": [
-        "assets/left-frame.ts-loader-DqP62eCv.js"
+        "assets/left-frame.ts-loader-Cum-hTzW.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*mainleftdin01.htm*"
@@ -67,7 +67,7 @@
     },
     {
       "js": [
-        "assets/center-frame.ts-loader-C2VfeP9F.js"
+        "assets/center-frame.ts-loader-CvOjBA7c.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*maincenter.htm*"
@@ -80,7 +80,7 @@
     },
     {
       "js": [
-        "assets/career-landing.ts-loader-B-OU1RNJ.js"
+        "assets/career-landing.ts-loader-BtKRxZqA.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/eselcarrera.htm*"
@@ -103,7 +103,7 @@
     },
     {
       "js": [
-        "assets/router.ts-loader-HsqWyTt_.js"
+        "assets/router.ts-loader-Biifvcik.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/econcfs01.htm*",
@@ -132,16 +132,16 @@
         "assets/center-layout-debug-bD1CAdlR.js",
         "assets/frameset-injector.ts-BbeVgwjl.js",
         "assets/dom-DNG4d4nx.js",
-        "assets/storage-CGf68QnW.js",
-        "assets/top-frame.ts-DQfKB0Fm.js",
+        "assets/storage-CmabcgjT.js",
+        "assets/top-frame.ts-CzOKuPic.js",
         "assets/jsx-runtime-18NIdeNA.js",
         "assets/menu-wWnSmKpE.js",
-        "assets/left-frame.ts-gH2RG3dt.js",
-        "assets/center-ui-DwIi17yk.js",
+        "assets/left-frame.ts-C7flgLdC.js",
+        "assets/center-ui--v-JpTKS.js",
         "assets/theme-PNjHhAdA.js",
-        "assets/center-frame.ts-CL-XKaz0.js",
-        "assets/kardex-2VjTFpTC.js",
-        "assets/career-landing.ts-CZHdQ0aZ.js"
+        "assets/center-frame.ts-D55DnxMS.js",
+        "assets/kardex-D2H372DB.js",
+        "assets/career-landing.ts-B8hBydSF.js"
       ],
       "use_dynamic_url": false
     },
@@ -164,13 +164,13 @@
         "https://deimos.dgi.uanl.mx/*"
       ],
       "resources": [
-        "assets/center-ui-DwIi17yk.js",
+        "assets/center-ui--v-JpTKS.js",
         "assets/dom-DNG4d4nx.js",
-        "assets/kardex-2VjTFpTC.js",
-        "assets/storage-CGf68QnW.js",
+        "assets/kardex-D2H372DB.js",
+        "assets/storage-CmabcgjT.js",
         "assets/center-layout-debug-bD1CAdlR.js",
         "assets/theme-PNjHhAdA.js",
-        "assets/router.ts-Cssu3nJa.js"
+        "assets/router.ts-C1WyiT8N.js"
       ],
       "use_dynamic_url": false
     }
