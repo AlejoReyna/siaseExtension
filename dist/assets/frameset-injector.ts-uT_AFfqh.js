@@ -1,1 +1,0 @@
-import{n as e,r as t}from"./single-view-layout-COB2VDz7.js";function n(){document.documentElement.dataset.siasePlus=`ready`,t(`frameset-injector document_start`),e(),window.addEventListener(`DOMContentLoaded`,()=>{t(`frameset-injector DOMContentLoaded`),e()},{once:!0}),window.addEventListener(`load`,()=>{t(`frameset-injector load`),e()},{once:!0})}n();

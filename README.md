@@ -176,3 +176,27 @@ I ran a live diagnostic against real ENE-JUN 2026 semester data and found the wi
 **Silent error swallowing.** When the API returned a session-expired payload (`Code: 2004` or `Code: 2011`) with an HTTP 200 status, `extractCoursesFromNexusResponse` received that error object, found no courses in it, and the widget reported "No tienes cursos activos en Nexus" as if the student had no classes. I added a `data.Code` check right after `ConsultarCarpetaCursos` returns. On a session error, the widget now shows "Sesión de Nexus expirada. Recarga la página para reconectar", clears the local token, and fires a `CLEAR_NEXUS_SESSION` message so the service worker and the content script both clear their caches in sync.
 
 All five activities for the week appear after the four fixes.
+
+---
+
+## May 6, 2026 — Kardex Background Scraping: Credits, Progress, and Average
+
+I wired the credit progress bar and academic average on the dashboard to real data from the student's kardex, loaded automatically in the background without requiring any manual navigation.
+
+### New types and storage key
+
+I created `src/types/kardex.ts` with two interfaces: `KardexEntry` (one row from the kardex table, carrying `subject`, `credits`, `score`, and `period`) and `KardexSummary` (the full result of a parse run, with `totalCreditsCompleted`, `totalCreditsRequired`, `progressPercent`, `average`, and `capturedAt`). I added `kardexSnapshot: KardexSummary` to the `StorageSchema` in `src/types/storage.ts`, keeping `KardexSummary` in its own file to avoid a circular import between the parser and storage modules.
+
+### Parser
+
+I rewrote `src/utils/parser/kardex.ts` around a new `parseKardexSummary` function. The parser walks every `<tr>` in the kardex document and classifies each row into one of three buckets: a totals row (matched by keywords like "total", "suma", or "acumulado" in the first cell or anywhere in the row), a promedio row (matched by a label like "Promedio: 87.40" or by a standalone two-decimal number between 60 and 100 in a row with no subject name), or a subject row. From the totals row it extracts the accumulated credit count. From subject rows it extracts the subject name, score, and credit hours using conservative regex patterns that avoid confusing a credit count with a score. If no totals row is found, it falls back to summing credits from passed subjects. If no promedio row is found, it falls back to an arithmetic average of all non-zero scores.
+
+### Page handler and dashboard connection
+
+`src/content/pages/kardex-page.ts` now calls `parseKardexSummary`, persists the result with `setStorageValue('kardexSnapshot', ...)`, and fires a fire-and-forget `REFRESH_KARDEX` message to the service worker, following the same pattern as the grades page handler.
+
+On the dashboard side, `career-landing.ts` gained a `fetchKardexInBackground` function that runs immediately after the dashboard renders. It first checks storage for a usable snapshot younger than one hour. A snapshot is considered usable only if `totalCreditsCompleted > 0` or `average` is defined, so a bad parse from a previous run does not get served indefinitely. If the snapshot is missing, expired, or invalid, the function creates a hidden one-pixel iframe pointing directly at `econkdx01.htm` and waits for it to load. Since both pages are on the same origin, the function accesses `iframe.contentDocument` directly, runs `parseKardexSummary` on it, saves the result, and updates the two dashboard panels: `#siase-insight-panel-progress` (the progress bar and credit count) and `#siase-insight-panel-average` (the numeric average).
+
+### Suppressing the portal alert
+
+The kardex page calls `alert()` when certain session variables that are normally embedded by the server are absent. Those variables are missing when the page loads inside an iframe rather than through the portal's menu navigation. The data still parses correctly because the session cookie is valid and the page content loads, but the alert blocked the UI. I fixed this by adding `sandbox="allow-same-origin allow-scripts"` to the hidden iframe. The `allow-same-origin` flag keeps the session cookie accessible and preserves same-origin DOM access. The `allow-scripts` flag lets the page's JavaScript run. Omitting `allow-modals` causes the browser to silently discard any `alert`, `confirm`, or `prompt` call from within the iframe, with no interception code required.

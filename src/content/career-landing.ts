@@ -5,6 +5,8 @@ import type {
 } from '@/types/chrome-messages';
 import type { MenuItem } from '@/types/menu';
 import { parseMenuItems } from '@/utils/parser/menu';
+import { parseKardexSummary } from '@/utils/parser/kardex';
+import { getStorageValue, setStorageValue } from '@/utils/storage';
 import { applyStoredTheme } from './theme';
 
 const PANEL_IDS = ['siase', 'correo', 'nexus', 'codice'] as const;
@@ -14,6 +16,11 @@ const SIASE_CONTENT_FRAME_NAME = 'siase-career-content-frame';
 const NEXUS_API_BASE = 'https://api.nexus.uanl.mx/WebApi';
 const NEXUS_CACHE_KEY = 'siase_nexus_widget_cache';
 const NEXUS_CACHE_TTL = 60 * 60 * 1000;
+
+const KARDEX_URL = 'https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/econkdx01.htm';
+const KARDEX_BG_FRAME_NAME = 'siase-plus-kardex-bg-frame';
+const KARDEX_CACHE_TTL = 60 * 60 * 1000; // 1 hora
+const KARDEX_LOAD_TIMEOUT_MS = 15_000;
 /** Margen de seguridad: invalidar 2 min antes de que Nexus expire la sesión */
 const NEXUS_TOKEN_EXPIRY_MARGIN_MS = 2 * 60 * 1000;
 /** Fallback conservador cuando la sesión no trae FechaInicio/TiempoRestante */
@@ -1823,6 +1830,182 @@ function injectDashboardChrome(frameDocument: Document): void {
   moveLegacyPanelsIntoQuickPanel(frameDocument);
 }
 
+// ── Kardex snapshot → dashboard ───────────────────────────────────────────────
+
+interface CreditProgressUIData {
+  progressPercent: number;
+  totalCreditsCompleted: number;
+  totalCreditsRequired: number;
+  average: number | undefined;
+  isEmpty: boolean;
+}
+
+function updateCreditProgressUI(data: CreditProgressUIData): void {
+  // ── Panel de PROGRESO
+  const progressPanel = document.querySelector('#siase-insight-panel-progress');
+  if (progressPanel) {
+    const progressStrong = progressPanel.querySelector(
+      '.siase-career-insight-card__heading strong'
+    );
+    if (progressStrong) {
+      progressStrong.textContent = data.isEmpty
+        ? '—'
+        : `${Math.round(data.progressPercent)}%`;
+    }
+
+    const progressBar = progressPanel.querySelector(
+      '.siase-career-insight-progress span'
+    );
+    if (progressBar instanceof HTMLElement) {
+      progressBar.style.width = data.isEmpty
+        ? '0%'
+        : `${Math.min(Math.round(data.progressPercent), 100)}%`;
+    }
+
+    const progressDesc = progressPanel.querySelector('p:last-of-type');
+    if (progressDesc) {
+      progressDesc.textContent = data.isEmpty
+        ? 'Visita tu kardex para ver tu progreso de créditos.'
+        : `${data.totalCreditsCompleted} / ${data.totalCreditsRequired} créditos completados.`;
+    }
+  }
+
+  // ── Panel de PROMEDIO
+  const averagePanel = document.querySelector('#siase-insight-panel-average');
+  if (averagePanel) {
+    const averageStrong = averagePanel.querySelector(
+      '.siase-career-average-display strong'
+    );
+    if (averageStrong) {
+      averageStrong.textContent =
+        data.isEmpty || data.average === undefined
+          ? '—'
+          : data.average.toFixed(1);
+    }
+
+    const averageDesc = averagePanel.querySelector('p:last-of-type');
+    if (averageDesc) {
+      averageDesc.textContent = data.isEmpty
+        ? 'Visita tu kardex para ver tu promedio académico.'
+        : 'Promedio general calculado desde tu kardex.';
+    }
+  }
+}
+
+const KARDEX_LOG = '[SIASE Plus Kardex]';
+
+async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
+  // Fast path: servir desde cache si es reciente
+  const cached = await getStorageValue('kardexSnapshot');
+  if (cached) {
+    const ageMs = Date.now() - new Date(cached.capturedAt).getTime();
+    const isUsable = cached.totalCreditsCompleted > 0 || cached.average !== undefined;
+    if (ageMs < KARDEX_CACHE_TTL && isUsable) {
+      console.log(KARDEX_LOG, 'usando snapshot cacheado', {
+        ageMs,
+        capturedAt: cached.capturedAt,
+        totalCreditsCompleted: cached.totalCreditsCompleted,
+        progressPercent: cached.progressPercent,
+        average: cached.average,
+      });
+      updateCreditProgressUI({ ...cached, isEmpty: false });
+      return;
+    }
+    if (!isUsable) {
+      console.warn(KARDEX_LOG, 'snapshot cacheado inválido (sin datos), forzando recarga', {
+        totalCreditsCompleted: cached.totalCreditsCompleted,
+        average: cached.average,
+      });
+    } else {
+      console.log(KARDEX_LOG, 'snapshot expirado, recargando', { ageMs });
+    }
+  } else {
+    console.log(KARDEX_LOG, 'sin snapshot previo, cargando kardex en background');
+  }
+
+  // Slow path: cargar el kardex en un iframe oculto (mismo origen → acceso directo al DOM)
+  await new Promise<void>((resolve) => {
+    let iframe = frameDocument.querySelector<HTMLIFrameElement>(
+      `iframe[name="${KARDEX_BG_FRAME_NAME}"]`
+    );
+    if (!iframe) {
+      iframe = frameDocument.createElement('iframe');
+      iframe.name = KARDEX_BG_FRAME_NAME;
+      iframe.style.cssText =
+        'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;border:0;';
+      iframe.setAttribute('aria-hidden', 'true');
+      // allow-same-origin: acceso a cookies de sesión de SIASE
+      // allow-scripts: JS del kardex corre normalmente
+      // Sin allow-modals: alert/confirm/prompt quedan suprimidos silenciosamente
+      iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+      frameDocument.body.append(iframe);
+    }
+
+    console.log(KARDEX_LOG, 'iframe oculto creado, cargando URL', { url: KARDEX_URL });
+
+    const cleanup = (iframeEl: HTMLIFrameElement): void => {
+      iframeEl.remove();
+      resolve();
+    };
+
+    const timer = setTimeout(() => {
+      console.warn(KARDEX_LOG, 'timeout: el iframe no cargó en', KARDEX_LOAD_TIMEOUT_MS, 'ms');
+      cleanup(iframe!);
+    }, KARDEX_LOAD_TIMEOUT_MS);
+
+    iframe.addEventListener(
+      'load',
+      () => {
+        clearTimeout(timer);
+        try {
+          const iframeDoc = iframe!.contentDocument;
+          const iframeUrl = iframe!.contentWindow?.location.href ?? '(no acceso)';
+          const iframeTitle = iframeDoc?.title ?? '(sin título)';
+          const bodyText = iframeDoc?.body?.innerText?.slice(0, 300) ?? '(sin body)';
+          const rowCount = iframeDoc?.querySelectorAll('tr').length ?? 0;
+
+          console.log(KARDEX_LOG, 'iframe load event', {
+            url: iframeUrl,
+            title: iframeTitle,
+            rowCount,
+            bodyPreview: bodyText,
+          });
+
+          if (!iframeDoc || rowCount === 0) {
+            console.warn(KARDEX_LOG, 'documento vacío o sin filas — sesión expirada o error de servidor');
+            cleanup(iframe!);
+            return;
+          }
+
+          const summary = parseKardexSummary(iframeDoc);
+          console.log(KARDEX_LOG, 'kardex parseado', {
+            entries: summary.entries.length,
+            totalCreditsCompleted: summary.totalCreditsCompleted,
+            progressPercent: summary.progressPercent,
+            average: summary.average,
+            primerEntrada: summary.entries[0],
+            ultimaEntrada: summary.entries[summary.entries.length - 1],
+          });
+
+          void setStorageValue('kardexSnapshot', summary).then(() => {
+            console.log(KARDEX_LOG, 'snapshot guardado en storage, actualizando UI');
+            updateCreditProgressUI({ ...summary, isEmpty: false });
+          });
+        } catch (err) {
+          console.error(KARDEX_LOG, 'error al acceder al iframe o parsear', err);
+        } finally {
+          cleanup(iframe!);
+        }
+      },
+      { once: true }
+    );
+
+    iframe.src = KARDEX_URL;
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 export function initializeCareerLanding(frameDocument: Document): void {
   if (!shouldEnhanceCareerLanding()) return;
 
@@ -1835,6 +2018,8 @@ export function initializeCareerLanding(frameDocument: Document): void {
   classifyLegacyStructure(frameDocument);
   injectDashboardChrome(frameDocument);
   scheduleNexusWidget(frameDocument);
+  // Carga el kardex en background (iframe oculto, mismo origen) — no bloquea el render
+  void fetchKardexInBackground(frameDocument);
 }
 
 initializeCareerLanding(document);
