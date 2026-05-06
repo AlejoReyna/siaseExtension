@@ -1,5 +1,10 @@
 import type { MenuItem } from '@/types/menu';
 import type { StudentInfo, StudentStatus } from '@/types/student';
+import {
+  centerLayoutDebugEnabled,
+  exposeCenterLayoutDebug,
+  logCenterLayoutSnapshot
+} from './center-layout-debug';
 import { getStorageValue } from '@/utils/storage';
 import { applyTheme, getStoredTheme } from './theme';
 
@@ -45,6 +50,26 @@ function studentInitial(studentInfo?: StudentInfo): string {
   return normalizeFirstName(studentInfo).charAt(0).toLocaleUpperCase('es-MX') || 'U';
 }
 
+/** Same probes as career-landing (#correo), plus fallbacks still without dropping studentInfo merges. */
+function resolveStudentEmailHint(frameDocument: Document, studentInfo?: StudentInfo): string {
+  const fromLegacy = frameDocument.querySelector('#correo a.style3')?.textContent?.trim();
+  if (fromLegacy?.includes('@')) return fromLegacy;
+
+  const mailAnchor = frameDocument.querySelector<HTMLAnchorElement>('a[href^="mailto:"]');
+  if (mailAnchor?.href) {
+    try {
+      const path = decodeURIComponent(new URL(mailAnchor.href).pathname);
+      if (path.includes('@')) return path;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const matricula = studentInfo?.matricula?.trim();
+  if (matricula && /^\d{5,}$/u.test(matricula)) return `${matricula}@uanl.edu.mx`;
+  return 'correo@uanl.edu.mx';
+}
+
 function actionIcon(label: string): string {
   const normalized = label.toLowerCase();
   if (/horario/.test(normalized)) return 'calendar';
@@ -67,7 +92,8 @@ function iconMarkup(name: string): string {
       '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
     pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"/>',
     gear: '<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2a2 2 0 1 1-4 0V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 1 1 4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H2.8a2 2 0 1 1 0-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.2a2 2 0 1 1 4 0V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/>',
-    receipt: '<path d="M6 3h12v18l-2-1-2 1-2-1-2 1-2-1-2 1V3Z"/><path d="M9 8h6M9 12h6M9 16h4"/>'
+    receipt: '<path d="M6 3h12v18l-2-1-2 1-2-1-2 1-2-1-2 1V3Z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+    chevron: '<path d="m6 9 6 6 6-6"/>'
   };
 
   return `<svg class="siase-icon" viewBox="0 0 24 24" aria-hidden="true">${icons[name] ?? icons.arrow}</svg>`;
@@ -117,38 +143,38 @@ function missingCreditsText(studentStatus?: StudentStatus): string {
   return `Faltan ${missingCredits} créditos para completar el plan de referencia actual.`;
 }
 
-function typeGreeting(element: HTMLElement, text: string): void {
-  if (element.dataset.typedGreeting === text) return;
-  element.dataset.typedGreeting = text;
-
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reducedMotion) {
-    element.textContent = text;
-    element.classList.remove('siase-dashboard__greeting--typing');
-    return;
-  }
-
-  element.textContent = '';
-  element.classList.add('siase-dashboard__greeting--typing');
-
-  let index = 0;
-  const timer = window.setInterval(() => {
-    element.textContent = text.slice(0, index + 1);
-    index += 1;
-
-    if (index >= text.length) {
-      window.clearInterval(timer);
-      window.setTimeout(() => element.classList.remove('siase-dashboard__greeting--typing'), 800);
-    }
-  }, 42);
-}
-
 function createShell(frameDocument: Document, questLabel: string): HTMLElement {
   const shell = frameDocument.createElement('section');
   shell.id = 'siase-plus-shell';
   shell.innerHTML = `
     <header class="siase-dashboard__header siase-entrance siase-entrance--header">
-      <div class="siase-dashboard__identity">
+      <div class="siase-dashboard__header-main" aria-label="Accesos superiores del panel">
+        <div class="siase-dashboard__header-lead">
+          <div class="siase-dashboard__tools">
+            <div class="siase-theme-picker">
+              <button class="siase-theme-button" type="button" aria-label="Personalizar tema" aria-expanded="false">
+                ${iconMarkup('gear')}
+              </button>
+              <div class="siase-theme-menu" hidden>
+                <button type="button" data-theme-option="institutional">Institucional</button>
+                <button type="button" data-theme-option="dark">Modo Oscuro</button>
+                <button type="button" data-theme-option="minimal">Minimalista</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="siase-career-nav__actions siase-dashboard__header-actions">
+          <div class="siase-career-user siase-dashboard__student-pill" aria-label="Cuenta institucional">
+            <span class="siase-career-avatar" data-student-pill-avatar>U</span>
+            <span>
+              <strong>Estudiante UANL</strong>
+              <em data-student-pill-email>correo@uanl.edu.mx</em>
+            </span>
+            ${iconMarkup('chevron')}
+          </div>
+        </div>
+      </div>
+      <div class="siase-dashboard__identity" hidden aria-hidden="true">
         <div class="siase-dashboard__identity-row">
           <h1 class="siase-dashboard__greeting">¡Hola! Estudiante</h1>
         </div>
@@ -156,18 +182,6 @@ function createShell(frameDocument: Document, questLabel: string): HTMLElement {
           <span><strong>Carrera</strong><em data-student-career>No disponible</em></span>
           <span><strong>Plan de estudios</strong><em data-student-plan>No disponible</em></span>
           <span><strong>Matrícula</strong><em data-student-matricula>Pendiente</em></span>
-        </div>
-      </div>
-      <div class="siase-dashboard__tools">
-        <div class="siase-theme-picker">
-          <button class="siase-theme-button" type="button" aria-label="Personalizar tema" aria-expanded="false">
-            ${iconMarkup('gear')}
-          </button>
-          <div class="siase-theme-menu" hidden>
-            <button type="button" data-theme-option="institutional">Institucional</button>
-            <button type="button" data-theme-option="dark">Modo Oscuro</button>
-            <button type="button" data-theme-option="minimal">Minimalista</button>
-          </div>
         </div>
       </div>
       <label class="siase-profile-photo" aria-label="Subir imagen de perfil">
@@ -333,7 +347,23 @@ function renderShellData(
   studentStatus: StudentStatus | undefined,
   menuItems: MenuItem[]
 ): void {
-  const greeting = shell.querySelector<HTMLElement>('.siase-dashboard__greeting');
+  const frameDocument = shell.ownerDocument;
+  const identityBlock = shell.querySelector<HTMLElement>('.siase-dashboard__identity');
+  if (identityBlock) {
+    identityBlock.hidden = true;
+    identityBlock.setAttribute('hidden', '');
+    identityBlock.setAttribute('aria-hidden', 'true');
+  }
+
+  const pillEmail = shell.querySelector<HTMLElement>('[data-student-pill-email]');
+  const pillAvatar = shell.querySelector<HTMLElement>('[data-student-pill-avatar]');
+  if (pillEmail) {
+    pillEmail.textContent = resolveStudentEmailHint(frameDocument, studentInfo);
+  }
+  if (pillAvatar) {
+    pillAvatar.textContent = studentInitial(studentInfo);
+  }
+
   const career = shell.querySelector<HTMLElement>('[data-student-career]');
   const plan = shell.querySelector<HTMLElement>('[data-student-plan]');
   const matricula = shell.querySelector<HTMLElement>('[data-student-matricula]');
@@ -345,11 +375,7 @@ function renderShellData(
   const missingCredits = shell.querySelector<HTMLElement>('[data-academic-missing-credits]');
   const status = shell.querySelector<HTMLElement>('[data-student-status]');
 
-  if (greeting) {
-    typeGreeting(greeting, `¡Hola! ${normalizeFirstName(studentInfo)}`);
-  }
-
-  hydrateProfilePhotoControls(shell, shell.ownerDocument, studentInfo);
+  hydrateProfilePhotoControls(shell, frameDocument, studentInfo);
 
   if (career) {
     career.textContent = studentInfo?.program || 'No disponible';
@@ -361,6 +387,18 @@ function renderShellData(
 
   if (matricula) {
     matricula.textContent = studentInfo?.matricula || 'Pendiente';
+  }
+
+  if (centerLayoutDebugEnabled(shell.ownerDocument)) {
+    const idNode = shell.querySelector<HTMLElement>('.siase-dashboard__identity');
+    const idDisplay = idNode ? shell.ownerDocument.defaultView?.getComputedStyle(idNode).display : null;
+    const idRect = idNode?.getBoundingClientRect();
+    console.info('[SIASE Plus][center-layout] renderShellData identity check', {
+      identityDisplay: idDisplay,
+      identityRect: idRect ? { w: idRect.width, h: idRect.height } : null,
+      hiddenAttr: idNode?.hasAttribute('hidden') ?? null,
+      careerTextLen: shell.querySelector('[data-student-career]')?.textContent?.length ?? null
+    });
   }
 
   if (credits) {
@@ -431,11 +469,15 @@ export function initializeCenterGameUi(
   frameDocument: Document,
   url = new URL(location.href)
 ): void {
+  exposeCenterLayoutDebug(frameDocument);
+
   frameDocument.body.classList.add('siase-plus-center', 'siase-plus-single-view');
   frameDocument.body.classList.toggle(
     'siase-plus-main-center',
     url.pathname.toLowerCase().includes('maincenter.htm')
   );
+
+  logCenterLayoutSnapshot(frameDocument, 'initializeCenterGameUi (after body classes, before shell)');
 
   const questLabel = currentQuestLabel(url.pathname);
   const existingShell = frameDocument.getElementById('siase-plus-shell');
@@ -443,12 +485,40 @@ export function initializeCenterGameUi(
     const questNode = existingShell.querySelector<HTMLElement>('[data-quest-label]');
     if (questNode) questNode.textContent = questLabel;
     hydrateThemeControls(existingShell, frameDocument);
-    void hydrateShell(existingShell);
+    void hydrateShell(existingShell).finally(() => {
+      logCenterLayoutSnapshot(frameDocument, 'initializeCenterGameUi (after hydrate, existing shell)');
+      try {
+        const msg =
+          '[SIASE Plus][center-layout] Frameset resize + geometry logs: top window localStorage.siase-plus-debug-layout = "1" → reload.';
+        if (!sessionStorage.getItem('siase-plus-debug-layout-tip')) {
+          sessionStorage.setItem('siase-plus-debug-layout-tip', '1');
+          console.info(msg);
+        } else if (centerLayoutDebugEnabled(frameDocument)) {
+          console.info(msg);
+        }
+      } catch {
+        /* ignore */
+      }
+    });
     return;
   }
 
   const shell = createShell(frameDocument, questLabel);
   frameDocument.body.prepend(shell);
   hydrateThemeControls(shell, frameDocument);
-  void hydrateShell(shell);
+  void hydrateShell(shell).finally(() => {
+    logCenterLayoutSnapshot(frameDocument, 'initializeCenterGameUi (after hydrate, new shell)');
+    try {
+      const msg =
+        '[SIASE Plus][center-layout] Frameset resize + geometry logs: top window localStorage.siase-plus-debug-layout = "1" → reload.';
+      if (!sessionStorage.getItem('siase-plus-debug-layout-tip')) {
+        sessionStorage.setItem('siase-plus-debug-layout-tip', '1');
+        console.info(msg);
+      } else if (centerLayoutDebugEnabled(frameDocument)) {
+        console.info(msg);
+      }
+    } catch {
+      /* ignore */
+    }
+  });
 }

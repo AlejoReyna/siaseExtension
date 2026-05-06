@@ -1,3 +1,5 @@
+import { centerLayoutDebugEnabled } from './center-layout-debug';
+
 type FrameSetDebugInfo = {
   index: number;
   rows: string | null;
@@ -76,6 +78,26 @@ function applyFrameGeometry(
   rootDocument.documentElement.dataset.siasePlusLayout = layout;
   rootDocument.documentElement.dataset.siasePlusSidebar =
     cols === '76,*' ? 'collapsed' : 'expanded';
+
+  if (centerLayoutDebugEnabled(rootDocument)) {
+    try {
+      const cw = centerFrame?.contentWindow;
+      const cwDoc = centerFrame?.contentDocument;
+      console.info('[SIASE Plus][frameset-layout] applyFrameGeometry', {
+        layout,
+        rows,
+        cols,
+        rootInnerWidth: rootDocument.defaultView?.innerWidth,
+        centerFrameName: centerFrame?.getAttribute('name'),
+        centerContentInnerWidth: cw?.innerWidth,
+        centerContentInnerHeight: cw?.innerHeight,
+        centerContentHasDocument: Boolean(cwDoc),
+        datasetSidebar: rootDocument.documentElement.dataset.siasePlusSidebar
+      });
+    } catch (error) {
+      console.warn('[SIASE Plus][frameset-layout] applyFrameGeometry log failed', error);
+    }
+  }
 }
 
 export function logFramesetState(context: string): void {
