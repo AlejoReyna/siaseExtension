@@ -1858,6 +1858,43 @@ function showPanel(frameDocument: Document, panelId: PanelId): void {
   });
 }
 
+function openExternalLink(frameDocument: Document, link: HTMLAnchorElement): boolean {
+  const frameWindow = frameDocument.defaultView ?? window;
+  const href = link.href || link.getAttribute('href');
+  if (!href) return false;
+
+  const target = link.target || '_blank';
+  const opened = frameWindow.open(href, target, 'noopener,noreferrer');
+  if (opened) return true;
+
+  frameWindow.location.assign(href);
+  return true;
+}
+
+function launchCareerService(frameDocument: Document, panelId: Exclude<PanelId, 'siase'>): boolean {
+  showPanel(frameDocument, panelId);
+
+  if (panelId === 'correo') {
+    const correoLink =
+      frameDocument.querySelector<HTMLAnchorElement>('#correo a[href^="https://login.microsoftonline.com"]') ??
+      Array.from(frameDocument.querySelectorAll<HTMLAnchorElement>('#correo a[href^="http"]')).find(
+        (link) => !link.classList.contains('style3')
+      ) ??
+      null;
+    return correoLink ? openExternalLink(frameDocument, correoLink) : false;
+  }
+
+  const buttonSelector =
+    panelId === 'nexus'
+      ? '#idfrNexus input[name="btnNexus"], #linkNexus'
+      : '#idfrCodice input[name="btnCodice"], #linkCodice';
+  const button = frameDocument.querySelector<HTMLInputElement | HTMLButtonElement>(buttonSelector);
+  if (!button) return false;
+
+  button.click();
+  return true;
+}
+
 function classifyLegacyStructure(frameDocument: Document): void {
   const [bannerTable, layoutTable] = Array.from(frameDocument.body.querySelectorAll('table'));
 
@@ -2130,7 +2167,7 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
         });
         return;
       }
-      showPanel(frameDocument, panelId);
+      launchCareerService(frameDocument, panelId);
     });
   });
 
