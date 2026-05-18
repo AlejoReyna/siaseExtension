@@ -1681,12 +1681,22 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
   background: var(--surface-muted);
   border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
   border-radius: 14px;
-  cursor: default;
-  transition: background 150ms ease;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .siase-nexus-widget__item:hover {
   background: color-mix(in srgb, var(--surface-muted) 82%, var(--primary-color) 18%);
+  border-color: color-mix(in srgb, var(--primary-color) 32%, var(--border-color));
+}
+
+.siase-nexus-widget__item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 70%, white);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 12%, transparent);
 }
 
 .siase-nexus-widget__item--urgente {

@@ -869,6 +869,19 @@ function agregarNexusActividadAlCalendario(
   });
 }
 
+function buildNexusActivityDeepLink(act: NexusActivity): string {
+  const params = new URLSearchParams({
+    siasePlusCourse: act.materia,
+    siasePlusActivity: act.actividad
+  });
+
+  return `https://plataformanexus.uanl.mx/#/App/UnidadesAprendizaje?${params.toString()}`;
+}
+
+function abrirNexusActivity(act: NexusActivity, frameWindow: Window): void {
+  frameWindow.location.assign(buildNexusActivityDeepLink(act));
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -1044,7 +1057,7 @@ function renderizarItem(act: NexusActivity, esUrgente: boolean, activityIndex: n
   const puntos = typeof act.valor === 'number' ? `${act.valor} pts` : 'Sin puntaje';
 
   return `
-    <article class="siase-nexus-widget__item${urgente ? ' siase-nexus-widget__item--urgente' : ''}">
+    <article class="siase-nexus-widget__item${urgente ? ' siase-nexus-widget__item--urgente' : ''}" role="link" tabindex="0" data-siase-nexus-open-activity data-siase-nexus-activity-idx="${activityIndex}" aria-label="Abrir actividad Nexus: ${escapeHtml(act.actividad)}">
       <div class="siase-nexus-widget__item-header">
         <span class="siase-nexus-widget__materia">${escapeHtml(abreviarNombre(act.materia))}</span>
         <span class="siase-nexus-widget__badge${urgente ? ' siase-nexus-widget__badge--urgente' : ''}">
@@ -2127,11 +2140,26 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     );
     if (nexusCalBtn && wrapper.contains(nexusCalBtn)) {
       event.preventDefault();
+      event.stopPropagation();
       const idxRaw = nexusCalBtn.dataset.siaseNexusActivityIdx;
       const idx = idxRaw !== undefined ? Number(idxRaw) : NaN;
       const list = nexusActivitiesByDocument.get(frameDocument);
       if (list && Number.isInteger(idx) && idx >= 0 && idx < list.length) {
         agregarNexusActividadAlCalendario(list[idx], frameDocument.defaultView ?? window, nexusCalBtn, idx);
+      }
+      return;
+    }
+
+    const nexusActivityItem = (event.target as Element | null)?.closest<HTMLElement>(
+      '[data-siase-nexus-open-activity]'
+    );
+    if (nexusActivityItem && wrapper.contains(nexusActivityItem)) {
+      event.preventDefault();
+      const idxRaw = nexusActivityItem.dataset.siaseNexusActivityIdx;
+      const idx = idxRaw !== undefined ? Number(idxRaw) : NaN;
+      const list = nexusActivitiesByDocument.get(frameDocument);
+      if (list && Number.isInteger(idx) && idx >= 0 && idx < list.length) {
+        abrirNexusActivity(list[idx], frameDocument.defaultView ?? window);
       }
       return;
     }
@@ -2143,6 +2171,23 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
       const index = Number(careerButton.dataset.siaseCareerIndex);
       if (Number.isInteger(index) && selectCareerByIndex(frameDocument, wrapper, index))
         closeCareerListModal(wrapper);
+    }
+  });
+
+  wrapper.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    const nexusActivityItem = (event.target as Element | null)?.closest<HTMLElement>(
+      '[data-siase-nexus-open-activity]'
+    );
+    if (!nexusActivityItem || !wrapper.contains(nexusActivityItem)) return;
+
+    event.preventDefault();
+    const idxRaw = nexusActivityItem.dataset.siaseNexusActivityIdx;
+    const idx = idxRaw !== undefined ? Number(idxRaw) : NaN;
+    const list = nexusActivitiesByDocument.get(frameDocument);
+    if (list && Number.isInteger(idx) && idx >= 0 && idx < list.length) {
+      abrirNexusActivity(list[idx], frameDocument.defaultView ?? window);
     }
   });
 

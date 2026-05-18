@@ -11,6 +11,12 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
-  build: { sourcemap: false, emptyOutDir: true, rollupOptions: { input: { popup: 'src/popup/popup.html' } } },
+  build: {
+    sourcemap: false,
+    emptyOutDir: true,
+    rollupOptions: {
+      input: { popup: 'src/popup/popup.html', historia: 'src/historia/historia.html' },
+    },
+  },
   test: { environment: 'jsdom', globals: true, include: ['src/tests/**/*.test.ts'] },
 });

@@ -31,7 +31,7 @@
   "content_scripts": [
     {
       "js": [
-        "assets/frameset-injector.ts-loader-BUhGRCP6.js"
+        "assets/frameset-injector.ts-loader-BmNJFjp-.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*default.htm*"
@@ -41,7 +41,7 @@
     },
     {
       "js": [
-        "assets/top-frame.ts-loader-BJhe4ON0.js"
+        "assets/top-frame.ts-loader-rgr9gZT6.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*maintop.htm*"
@@ -54,7 +54,7 @@
     },
     {
       "js": [
-        "assets/left-frame.ts-loader-Cum-hTzW.js"
+        "assets/left-frame.ts-loader-CpGWqOC9.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*mainleftdin01.htm*"
@@ -67,7 +67,7 @@
     },
     {
       "js": [
-        "assets/center-frame.ts-loader-CvOjBA7c.js"
+        "assets/center-frame.ts-loader-B_Bmtmdc.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/*maincenter.htm*"
@@ -80,7 +80,7 @@
     },
     {
       "js": [
-        "assets/career-landing.ts-loader-BPsfrF2e.js"
+        "assets/career-landing.ts-loader-B5Y4EGvy.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/eselcarrera.htm*"
@@ -93,7 +93,7 @@
     },
     {
       "js": [
-        "assets/nexus-session-capture.ts-ChMJI15n.js"
+        "assets/nexus-session-capture.ts-CpYH3Iwx.js"
       ],
       "matches": [
         "https://plataformanexus.uanl.mx/*"
@@ -103,7 +103,7 @@
     },
     {
       "js": [
-        "assets/router.ts-loader-Biifvcik.js"
+        "assets/router.ts-loader-CYnBS-Ox.js"
       ],
       "matches": [
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/econcfs01.htm*",
@@ -128,20 +128,20 @@
       "resources": [
         "src/content/styles/shadow.css",
         "icons/*.png",
-        "assets/single-view-layout-CbW7mO8X.js",
-        "assets/center-layout-debug-bD1CAdlR.js",
-        "assets/frameset-injector.ts-BbeVgwjl.js",
-        "assets/dom-DNG4d4nx.js",
-        "assets/storage-CmabcgjT.js",
-        "assets/top-frame.ts-CzOKuPic.js",
-        "assets/jsx-runtime-18NIdeNA.js",
-        "assets/menu-wWnSmKpE.js",
-        "assets/left-frame.ts-C7flgLdC.js",
-        "assets/center-ui--v-JpTKS.js",
-        "assets/theme-PNjHhAdA.js",
-        "assets/center-frame.ts-D55DnxMS.js",
-        "assets/kardex-D2H372DB.js",
-        "assets/career-landing.ts-BH6wuAki.js"
+        "assets/single-view-layout-Cb-1EJGK.js",
+        "assets/center-layout-debug-BsmNkshu.js",
+        "assets/frameset-injector.ts-D3XCTXtH.js",
+        "assets/dom-DsnxF-Y-.js",
+        "assets/storage-DPPjqHu1.js",
+        "assets/top-frame.ts-CXPeKro6.js",
+        "assets/jsx-runtime-CpzHkGBj.js",
+        "assets/menu-BPIw1x24.js",
+        "assets/left-frame.ts-C4VO03A0.js",
+        "assets/center-ui-BXno3GP1.js",
+        "assets/theme-CCGzrRdb.js",
+        "assets/center-frame.ts-2AZizoLp.js",
+        "assets/kardex-GQB9uhsr.js",
+        "assets/career-landing.ts-B2K3MEhx.js"
       ],
       "use_dynamic_url": false
     },
@@ -150,7 +150,7 @@
         "https://plataformanexus.uanl.mx/*"
       ],
       "resources": [
-        "assets/nexus-session-capture.ts-ChMJI15n.js"
+        "assets/nexus-session-capture.ts-CpYH3Iwx.js"
       ],
       "use_dynamic_url": false
     },
@@ -164,13 +164,13 @@
         "https://deimos.dgi.uanl.mx/*"
       ],
       "resources": [
-        "assets/center-ui--v-JpTKS.js",
-        "assets/dom-DNG4d4nx.js",
-        "assets/kardex-D2H372DB.js",
-        "assets/storage-CmabcgjT.js",
-        "assets/center-layout-debug-bD1CAdlR.js",
-        "assets/theme-PNjHhAdA.js",
-        "assets/router.ts-C1WyiT8N.js"
+        "assets/center-ui-BXno3GP1.js",
+        "assets/dom-DsnxF-Y-.js",
+        "assets/kardex-GQB9uhsr.js",
+        "assets/storage-DPPjqHu1.js",
+        "assets/center-layout-debug-BsmNkshu.js",
+        "assets/theme-CCGzrRdb.js",
+        "assets/router.ts-CwQ0zlZx.js"
       ],
       "use_dynamic_url": false
     }

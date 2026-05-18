@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+
+:root {
+  /* Colors */
+  --color-canvas-white: #ffffff;
+  --color-off-white: #fafafa;
+  --color-pitch-black: #0a0a0a;
+  --color-charcoal: #1c1c1c;
+  --color-dark-charcoal: #2d2d2d;
+  --color-slate-gray: #64748b;
+  --color-medium-gray: #94a3b8;
+  --color-action-azure: #0056d2;
+  --color-cofounder-blue: #0f172a;
+  --color-night-sky: #020617;
+
+  /* Typography (stacks until webfonts are bundled) */
+  --font-ppmondwest: 'PP Mondwest', Georgia, 'Times New Roman', serif;
+  --font-af: 'AF', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Typographic scale */
+  --text-caption: 0.75rem;
+  --text-button-label: 0.875rem;
+  --text-subheading: 1.125rem;
+  --text-heading: 1.5rem;
+  --text-heading-lg: 2rem;
+  --text-display: 3.5rem;
+
+  /* Spacing */
+  --spacing-4: 0.25rem;
+  --spacing-8: 0.5rem;
+  --spacing-12: 0.75rem;
+  --spacing-16: 1rem;
+  --spacing-20: 1.25rem;
+  --spacing-24: 1.5rem;
+  --spacing-32: 2rem;
+  --spacing-40: 2.5rem;
+  --spacing-48: 3rem;
+  --spacing-64: 4rem;
+  --spacing-80: 5rem;
+
+  /* Shadows */
+  --shadow-subtle: 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 4px 6px rgb(0 0 0 / 0.05);
+
+  /* Radii */
+  --radius-btn: 4px;
+  --radius-card-sm: 12px;
+  --radius-card-md: 16px;
+  --radius-card-lg: 24px;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --text-display: 2.25rem;
+    --text-heading-lg: 1.5rem;
+  }
+}

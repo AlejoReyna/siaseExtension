@@ -88,6 +88,16 @@ export function PopupApp(): JSX.Element {
           {subtitleShown}
           {subtitleTyping ? <TypeCursor /> : null}
         </p>
+        {subtitleDone ? (
+          <a
+            href={chrome.runtime.getURL('src/historia/historia.html')}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 text-[10px] font-medium text-white/80 underline decoration-white/40 underline-offset-4 transition-colors hover:text-white hover:decoration-white"
+          >
+            Historia del proyecto
+          </a>
+        ) : null}
       </div>
     </main>
   );
