@@ -4,9 +4,13 @@ body.siase-plus-center {
   --bg-app: #f4f7fb;
   --surface-color: #ffffff;
   --surface-muted: #eef3f8;
+  --surface-card: #ffffff;
   --text-color: #172033;
   --muted-color: #64748b;
   --border-color: rgba(15, 23, 42, 0.1);
+  --career-rail-bg: #05386f;
+  --career-rail-hover: rgba(84, 116, 168, 0.4);
+  --career-rail-active: rgba(84, 116, 168, 0.55);
   min-height: 100vh;
   margin: 0 !important;
   padding: 0 24px 24px !important;
@@ -24,14 +28,19 @@ body.siase-plus-center {
 }
 
 body.siase-plus-center[data-siase-theme='dark'] {
-  --primary-color: #8ab4ff;
+  --primary-color: #f0b90b;
   --secondary-color: #ffc72c;
-  --bg-app: #07111f;
-  --surface-color: #0f1f33;
-  --surface-muted: #132942;
-  --text-color: #f8fafc;
-  --muted-color: #a8b3c7;
-  --border-color: rgba(255, 255, 255, 0.12);
+  --bg-app: #080b12;
+  --surface-color: #0d111a;
+  --surface-muted: #121823;
+  --surface-card: #0f1420;
+  --text-color: #d7dce6;
+  --muted-color: #747d8f;
+  --border-color: rgba(11, 58, 123, 0.72);
+  --career-rail-bg: #083b78;
+  --career-rail-hover: rgba(71, 91, 132, 0.52);
+  --career-rail-active: rgba(71, 91, 132, 0.72);
+  color-scheme: dark;
 }
 
 body.siase-plus-center[data-siase-theme='minimal'] {
@@ -40,9 +49,13 @@ body.siase-plus-center[data-siase-theme='minimal'] {
   --bg-app: #fafafa;
   --surface-color: #ffffff;
   --surface-muted: #f1f5f9;
+  --surface-card: #ffffff;
   --text-color: #111827;
   --muted-color: #64748b;
   --border-color: rgba(17, 24, 39, 0.1);
+  --career-rail-bg: #111827;
+  --career-rail-hover: rgba(255, 255, 255, 0.1);
+  --career-rail-active: rgba(255, 255, 255, 0.16);
 }
 
 #siase-plus-shell {
@@ -55,6 +68,153 @@ body.siase-plus-center[data-siase-theme='minimal'] {
   max-width: 1180px;
   padding: 18px 0 0;
   overflow: hidden;
+}
+
+body.siase-plus-embedded-career-center {
+  padding: 0 !important;
+}
+
+body.siase-plus-embedded-career-center #siase-plus-shell {
+  height: 100vh;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__main {
+  gap: 0;
+  margin-top: 0;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__primary {
+  gap: 0;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__section {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__primary > .siase-dashboard__section + .siase-dashboard__section {
+  margin-top: -1px;
+}
+
+body.siase-plus-embedded-career-center .siase-quick-panel {
+  margin-left: -1px;
+}
+
+body.siase-plus-embedded-career-center .siase-events__list,
+body.siase-plus-embedded-career-center .siase-dashboard__quick-actions {
+  gap: 0;
+  padding-right: 0;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  border: 1px solid var(--border-color);
+}
+
+body.siase-plus-embedded-career-center .siase-event,
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'icon'
+    'title'
+    'helper';
+  align-content: center;
+  justify-items: start;
+  min-height: 122px;
+  padding: 18px;
+  border: 0;
+  border-left: 0;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card:nth-child(2n) {
+  border-right: 0;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card:nth-child(2n):nth-last-child(2) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card:last-child {
+  border-bottom: 0;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--secondary-color);
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card--academic::before {
+  background: #2563eb;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card--schedule::before {
+  background: #f0b90b;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card--payments::before {
+  background: #f59e0b;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card--services::before {
+  background: #7c3aed;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card--profile::before {
+  background: #10b981;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-icon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 12px;
+  color: var(--secondary-color);
+  background: transparent;
+  border-radius: 0;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card strong,
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card
+  > span:not(.siase-dashboard__quick-icon):not(.siase-dashboard__quick-arrow) {
+  justify-self: start;
+  text-align: left;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card
+  > span:not(.siase-dashboard__quick-icon):not(.siase-dashboard__quick-arrow) {
+  margin-top: 4px;
+  color: color-mix(in srgb, var(--secondary-color) 58%, var(--muted-color));
+  font-size: 11px;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-arrow {
+  display: none;
+}
+
+body.siase-plus-embedded-career-center .siase-event + .siase-event,
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card + .siase-dashboard__quick-card {
+  margin-top: -1px;
+}
+
+body.siase-plus-embedded-career-center .siase-dashboard__quick-card + .siase-dashboard__quick-card {
+  margin-top: 0;
 }
 
 .siase-entrance {
@@ -122,6 +282,10 @@ body.siase-plus-center.siase-plus-main-center #siase-plus-shell .siase-dashboard
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 12px;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+}
+
+body.siase-plus-embedded-career-center #siase-plus-shell > .siase-dashboard__header {
+  display: none !important;
 }
 
 #siase-plus-shell .siase-dashboard__header:has(.siase-dashboard__identity[hidden]) {
@@ -767,7 +931,7 @@ body.siase-plus-center table.auto-style8 {
   backdrop-filter: blur(10px);
 }
 
-body.siase-plus-single-view > :not(#siase-plus-shell):not(script):not(style) {
+body.siase-plus-single-view > :not(#siase-plus-shell):not(.siase-career-dashboard):not(script):not(style) {
   max-width: 1180px !important;
   margin-right: auto !important;
   margin-left: auto !important;
@@ -789,6 +953,12 @@ body.siase-plus-career-landing {
     linear-gradient(180deg, color-mix(in srgb, var(--bg-app) 92%, #ffffff), var(--bg-app)) !important;
 }
 
+body.siase-plus-career-landing[data-siase-theme='dark'] {
+  background:
+    linear-gradient(90deg, rgba(8, 59, 120, 0.2), transparent 18rem),
+    var(--bg-app) !important;
+}
+
 body.siase-plus-career-landing > br {
   display: none;
 }
@@ -802,9 +972,14 @@ body.siase-plus-career-landing > br {
   margin: 0;
   overflow: hidden;
   background: var(--surface-color);
-  border: 1px solid var(--border-color);
+  border: 0;
   border-radius: 0;
-  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.08);
+  box-shadow: none;
+}
+
+body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-dashboard {
+  background: var(--bg-app);
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
 }
 
 .siase-career-dashboard > .siase-career-grid {
@@ -812,11 +987,17 @@ body.siase-plus-career-landing > br {
 }
 
 .siase-career-siase-mode .siase-career-dashboard {
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   border: 0;
 }
 
 body.siase-plus-career-landing > .siase-career-dashboard {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+body.siase-plus-single-view.siase-plus-career-landing > .siase-career-dashboard {
+  width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
 }
@@ -835,8 +1016,43 @@ body.siase-plus-career-landing > .siase-career-dashboard {
   box-shadow: none;
 }
 
+body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav {
+  background: var(--surface-color);
+  border-bottom-color: color-mix(in srgb, var(--border-color) 70%, transparent);
+}
+
 .siase-career-siase-mode .siase-career-nav {
-  display: none;
+  display: flex;
+  min-height: 76px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 94% 0%, rgba(255, 199, 44, 0.2), transparent 28%),
+    linear-gradient(135deg, var(--primary-color), #001a36);
+  border-bottom-color: color-mix(in srgb, var(--primary-color) 68%, #ffffff);
+}
+
+.siase-career-siase-mode .siase-career-nav-brand-title {
+  color: var(--surface-color);
+  background: rgba(255, 255, 255, 0.74);
+  border-left-color: var(--secondary-color);
+}
+
+.siase-career-siase-mode .siase-career-user {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.siase-career-siase-mode .siase-career-user strong {
+  color: #ffffff;
+}
+
+.siase-career-siase-mode .siase-career-user em {
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.siase-career-siase-mode .siase-career-user > .siase-career-icon {
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .siase-career-brand,
@@ -935,6 +1151,7 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   gap: 0;
+  height: 100%;
   min-height: 0;
   margin-top: 0;
   overflow: hidden;
@@ -944,6 +1161,7 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 0;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -951,7 +1169,9 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
 .siase-career-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.78fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 0;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -977,7 +1197,8 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
 .siase-career-main,
 .siase-career-sidebar {
   display: grid;
-  align-content: start;
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
   gap: 0;
   min-height: 0;
 }
@@ -987,11 +1208,13 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
 }
 
 .siase-career-siase-mode .siase-career-main {
+  grid-column: 1 / -1;
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
   overflow: hidden;
 }
 
 .siase-career-sidebar {
-  grid-auto-rows: max-content;
   height: 100%;
   overflow-y: auto;
   margin-left: -1px;
@@ -1152,12 +1375,17 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
 .siase-career-main > .siase-career-section {
   height: 100%;
   min-height: 0;
+  border-right: 0;
   overflow: auto;
 }
 
 .siase-career-sidebar > .siase-career-news-card,
 .siase-career-sidebar > .siase-career-events-card {
   margin-top: -1px;
+  height: calc(100% + 1px);
+  min-height: 0;
+  border-left: 0;
+  overflow: auto;
 }
 
 .siase-career-quick-panel {
@@ -1175,16 +1403,55 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
 
 .siase-career-quick-panel--sidebar {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100%;
   padding: 16px 0;
-  overflow: hidden auto;
+  overflow: visible;
   background:
     radial-gradient(circle at 50% 0%, rgba(255, 199, 44, 0.12), transparent 28%),
-    #05386f;
+    var(--career-rail-bg);
   border: 0;
   border-radius: 0;
-  box-shadow: 18px 0 42px rgba(0, 26, 54, 0.24);
+  box-shadow: none;
+}
+
+body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-quick-panel--sidebar {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 199, 44, 0.16), transparent 26%),
+    var(--career-rail-bg);
+  border-right: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+}
+
+.siase-career-rail-home {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 48px;
+  margin: 0 0 8px;
+  padding: 8px 0;
+  color: rgba(255, 255, 255, 0.76);
+  background: transparent;
+  border: 0;
+  border-left: 4px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.siase-career-rail-home:hover,
+.siase-career-rail-home:focus-visible {
+  color: #ffffff;
+  background: var(--career-rail-hover);
+  border-left-color: var(--secondary-color);
+  outline: none;
+}
+
+.siase-career-rail-home .siase-career-icon {
+  width: 21px;
+  height: 21px;
 }
 
 .siase-career-quick-panel--sidebar .siase-career-section__header {
@@ -1262,6 +1529,45 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
   overscroll-behavior: contain;
 }
 
+.siase-career-rail-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 6px 0;
+}
+
+.siase-career-rail-group + .siase-career-rail-group {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.siase-career-rail-group__marker {
+  width: 22px;
+  height: 3px;
+  margin: 0 auto 4px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+
+.siase-career-rail-group--academic .siase-career-rail-group__marker {
+  background: #7fb3ff;
+}
+
+.siase-career-rail-group--schedule .siase-career-rail-group__marker {
+  background: #70d6ff;
+}
+
+.siase-career-rail-group--payments .siase-career-rail-group__marker {
+  background: #ffc72c;
+}
+
+.siase-career-rail-group--services .siase-career-rail-group__marker {
+  background: #9be7c2;
+}
+
+.siase-career-rail-group--profile .siase-career-rail-group__marker {
+  background: #d8b4fe;
+}
+
 .siase-career-quick-panel .siase-career-quick-card {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.16);
@@ -1303,14 +1609,14 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
 
 .siase-career-quick-panel--sidebar .siase-career-quick-card:hover {
   transform: none;
-  background: rgba(84, 116, 168, 0.4);
+  background: var(--career-rail-hover);
   border-left-color: rgba(243, 200, 97, 0.5);
   box-shadow: none;
 }
 
 .siase-career-quick-panel--sidebar .siase-career-quick-card.is-active {
   transform: none;
-  background: rgba(84, 116, 168, 0.55);
+  background: var(--career-rail-active);
   border-left-color: #f3c861;
   box-shadow: none;
 }
@@ -1349,13 +1655,25 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
   display: none;
 }
 
+.siase-career-rail-actions {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 0 8px;
+}
+
+.siase-career-theme-picker {
+  position: relative;
+}
+
+.siase-career-rail-settings,
 .siase-career-rail-logout {
   display: grid;
   place-items: center;
   width: 100%;
   min-height: 44px;
-  margin-top: 8px;
-  margin-bottom: 8px;
+  margin: 0;
   padding: 8px 0;
   color: rgba(255, 255, 255, 0.6);
   background: transparent;
@@ -1369,14 +1687,82 @@ body.siase-plus-career-landing[data-siase-theme='dark'] .siase-career-nav-brand-
     color 150ms ease;
 }
 
+.siase-career-rail-settings:hover,
+.siase-career-rail-settings[aria-expanded='true'],
 .siase-career-rail-logout:hover {
   transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
+.siase-career-rail-settings .siase-career-icon,
 .siase-career-rail-logout .siase-career-icon {
   width: 20px;
   height: 20px;
+}
+
+.siase-career-theme-menu {
+  position: absolute;
+  bottom: 2px;
+  left: calc(100% + 10px);
+  z-index: 30;
+  display: grid;
+  gap: 4px;
+  width: 168px;
+  padding: 8px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(0, 18, 38, 0.28);
+}
+
+.siase-career-theme-menu[hidden] {
+  display: none !important;
+}
+
+.siase-career-theme-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 9px;
+  color: var(--text-color);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.siase-career-theme-menu button:hover,
+.siase-career-theme-menu button.is-active {
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary-color) 32%, var(--border-color));
+}
+
+.siase-career-theme-swatch {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+  border-radius: 50%;
+}
+
+.siase-career-theme-swatch--institutional {
+  background: linear-gradient(135deg, #002e5d 0 50%, #ffc72c 50% 100%);
+}
+
+.siase-career-theme-swatch--dark {
+  background: linear-gradient(135deg, #083b78 0 38%, #0d111a 38% 70%, #f0b90b 70% 100%);
+}
+
+.siase-career-theme-swatch--minimal {
+  background: linear-gradient(135deg, #111827 0 50%, #f8fafc 50% 100%);
 }
 
 .siase-career-quick-card {
@@ -1613,6 +1999,8 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
 
 .siase-nexus-widget {
   display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: 0;
 }
 
@@ -1662,6 +2050,8 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
 
 .siase-nexus-widget__group {
   display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: 8px;
 }
 
@@ -2160,6 +2550,31 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
   text-shadow: 0 2px 22px rgba(0, 0, 0, 0.28);
 }
 
+.siase-career-siase-mode .siase-career-insight-wide__heading {
+  display: none;
+}
+
+.siase-career-siase-mode .siase-career-insight-wide__split {
+  grid-template-rows: auto auto;
+  align-items: center;
+}
+
+.siase-career-siase-mode .siase-career-insight-wide__career-column {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+
+.siase-career-siase-mode .siase-career-insight-wide__metrics {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.siase-career-siase-mode .siase-career-insight-wide__trail-slot,
+.siase-career-siase-mode .siase-career-insight-wide__split > .siase-career-carousel__arrow--trail {
+  grid-row: 1 / span 2;
+}
+
 .siase-career-insight-wide__tabs-rail {
   grid-column: 2;
   grid-row: 1;
@@ -2361,6 +2776,7 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
 
 .siase-career-news-card {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 281px;
   gap: 12px;
 }
@@ -2385,6 +2801,14 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
   margin-bottom: 4px;
 }
 
+.siase-career-news-card__list {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+}
+
 .siase-career-news-card article {
   display: grid;
   gap: 4px;
@@ -2392,6 +2816,20 @@ body.siase-plus-career-landing .siase-career-legacy-slot .siase-plus-career-pane
   background: var(--surface-muted);
   border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
   border-radius: 14px;
+}
+
+.siase-career-news-card article a {
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.siase-career-news-card article a:hover,
+.siase-career-news-card article a:focus-visible {
+  color: var(--primary-color);
+  outline: none;
 }
 
 .siase-career-news-card article strong {
@@ -2463,11 +2901,7 @@ body.siase-plus-career-landing .siase-plus-career-layout {
 }
 
 body.siase-plus-career-landing .siase-plus-career-banner {
-  margin: 0 auto 18px !important;
-}
-
-body.siase-plus-career-landing .siase-plus-career-footer {
-  margin: 28px auto 0 !important;
+  display: none !important;
 }
 
 body.siase-plus-career-landing .siase-plus-career-banner img {
@@ -2676,6 +3110,203 @@ body.siase-plus-career-landing .ui-dialog-titlebar {
 body.siase-plus-career-landing[data-siase-theme='dark'] .siase-plus-career-banner img,
 body.siase-plus-career-landing[data-siase-theme='dark'] .siase-plus-career-layout a[onmouseover] img {
   filter: saturate(0.9) brightness(0.86);
+}
+
+body.siase-plus-gym-reservation-page {
+  min-height: 100vh;
+  margin: 0 !important;
+  padding: 26px clamp(18px, 3vw, 42px) !important;
+  color: var(--text-color);
+  background:
+    radial-gradient(circle at 90% 0%, rgba(255, 199, 44, 0.12), transparent 28rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-app) 88%, #ffffff), var(--bg-app)) !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
+}
+
+body.siase-plus-gym-reservation-page *,
+body.siase-plus-gym-reservation-page *::before,
+body.siase-plus-gym-reservation-page *::after {
+  box-sizing: border-box;
+}
+
+body.siase-plus-gym-reservation-page > center,
+body.siase-plus-gym-reservation-page > form,
+body.siase-plus-gym-reservation-page > table,
+body.siase-plus-gym-reservation-page .ui-tabs {
+  width: min(100%, 1120px) !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+body.siase-plus-gym-reservation-page .ui-tabs,
+body.siase-plus-gym-reservation-page table:first-of-type {
+  overflow: hidden;
+  color: var(--text-color) !important;
+  background: color-mix(in srgb, var(--surface-color) 96%, transparent) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 52px rgba(15, 23, 42, 0.12) !important;
+}
+
+body.siase-plus-gym-reservation-page .ui-tabs {
+  padding: 0 18px 20px !important;
+}
+
+body.siase-plus-gym-reservation-page .ui-tabs-nav {
+  display: flex !important;
+  gap: 8px;
+  align-items: flex-end;
+  margin: 0 -18px 22px !important;
+  padding: 10px 10px 0 !important;
+  list-style: none !important;
+  background:
+    linear-gradient(180deg, rgba(213, 235, 252, 0.92), rgba(238, 246, 252, 0.94)) !important;
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--primary-color) 16%, var(--border-color)) !important;
+}
+
+body.siase-plus-gym-reservation-page .ui-tabs-nav li {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+body.siase-plus-gym-reservation-page .ui-tabs-nav a {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 18px !important;
+  color: color-mix(in srgb, var(--primary-color) 82%, #2563eb) !important;
+  background: color-mix(in srgb, var(--surface-color) 72%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 18%, var(--border-color)) !important;
+  border-bottom: 0 !important;
+  border-radius: 10px 10px 0 0 !important;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-decoration: none !important;
+}
+
+body.siase-plus-gym-reservation-page .ui-tabs-nav .ui-tabs-active a,
+body.siase-plus-gym-reservation-page .ui-tabs-nav .ui-state-active a {
+  color: #ffffff !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.24), transparent 34%),
+    linear-gradient(135deg, #238ad0, #56c4f1) !important;
+  border-color: #238ad0 !important;
+  box-shadow: 0 10px 22px rgba(35, 138, 208, 0.22);
+}
+
+body.siase-plus-gym-reservation-page label,
+body.siase-plus-gym-reservation-page td,
+body.siase-plus-gym-reservation-page th {
+  color: var(--text-color) !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
+}
+
+body.siase-plus-gym-reservation-page select,
+body.siase-plus-gym-reservation-page input[type='text'] {
+  min-height: 38px;
+  padding: 7px 36px 7px 11px;
+  color: var(--text-color) !important;
+  background: #ffffff !important;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 24%, var(--border-color)) !important;
+  border-radius: 8px !important;
+  font: 600 14px/1.2 Inter, ui-sans-serif, system-ui, sans-serif !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+body.siase-plus-gym-reservation-page select {
+  width: min(100%, 520px) !important;
+}
+
+body.siase-plus-gym-reservation-page input[type='button'],
+body.siase-plus-gym-reservation-page input[type='submit'],
+body.siase-plus-gym-reservation-page button,
+body.siase-plus-gym-reservation-page .fc-button,
+body.siase-plus-gym-reservation-page .ui-button {
+  min-height: 36px;
+  padding: 8px 16px !important;
+  color: var(--primary-color) !important;
+  background: color-mix(in srgb, #e7f4ff 88%, #ffffff) !important;
+  border: 1px solid color-mix(in srgb, #60a5fa 42%, var(--border-color)) !important;
+  border-radius: 8px !important;
+  font: 850 13px/1 Inter, ui-sans-serif, system-ui, sans-serif !important;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+body.siase-plus-gym-reservation-page input[type='button']:hover,
+body.siase-plus-gym-reservation-page input[type='submit']:hover,
+body.siase-plus-gym-reservation-page button:hover,
+body.siase-plus-gym-reservation-page .fc-button:hover,
+body.siase-plus-gym-reservation-page .ui-button:hover {
+  filter: brightness(1.04);
+}
+
+body.siase-plus-gym-reservation-page .fc {
+  width: 100% !important;
+  margin-top: 24px !important;
+  color: var(--text-color) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+body.siase-plus-gym-reservation-page .fc-header,
+body.siase-plus-gym-reservation-page .fc-header td {
+  padding: 8px 10px !important;
+  background: color-mix(in srgb, var(--surface-muted) 82%, #ffffff) !important;
+}
+
+body.siase-plus-gym-reservation-page .fc-widget-header,
+body.siase-plus-gym-reservation-page .fc-widget-content {
+  border-color: color-mix(in srgb, var(--primary-color) 18%, var(--border-color)) !important;
+}
+
+body.siase-plus-gym-reservation-page .fc-widget-header,
+body.siase-plus-gym-reservation-page .fc-agenda-axis {
+  color: color-mix(in srgb, var(--text-color) 92%, var(--primary-color)) !important;
+  background: color-mix(in srgb, #dff0fb 74%, #ffffff) !important;
+  font-weight: 850 !important;
+}
+
+body.siase-plus-gym-reservation-page .fc-agenda-days .fc-today,
+body.siase-plus-gym-reservation-page .fc-today {
+  background: rgba(255, 199, 44, 0.32) !important;
+}
+
+body.siase-plus-gym-reservation-page .fc-event {
+  background: linear-gradient(135deg, var(--primary-color), #0758b8) !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 14px rgba(0, 26, 54, 0.14);
+}
+
+body.siase-plus-gym-reservation-page [style*='background-color: Yellow'],
+body.siase-plus-gym-reservation-page [style*='background-color: yellow'],
+body.siase-plus-gym-reservation-page [bgcolor='Yellow'],
+body.siase-plus-gym-reservation-page [bgcolor='yellow'] {
+  background: rgba(255, 199, 44, 0.42) !important;
+}
+
+body.siase-plus-gym-reservation-page [style*='background-color: #9ab3df'],
+body.siase-plus-gym-reservation-page [style*='background-color:#9ab3df'] {
+  background: color-mix(in srgb, #8fb4eb 76%, #ffffff) !important;
+}
+
+body.siase-plus-gym-reservation-page .ui-tabs-panel {
+  padding: 0 !important;
+}
+
+body.siase-plus-gym-reservation-page p,
+body.siase-plus-gym-reservation-page font {
+  color: var(--muted-color) !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
 }
 
 @keyframes siaseHeaderReveal {

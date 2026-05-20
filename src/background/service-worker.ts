@@ -2,13 +2,15 @@ import type {
   ChromeMessage,
   NexusApiRequestMessage,
   NexusApiResponseMessage,
-  NexusPortalRequestMessage
+  NexusPortalRequestMessage,
+  UanlNewsRequestMessage
 } from '@/types/chrome-messages';
 import { handleAlarm, registerGradeCheckAlarm } from './alarms';
 import { handleGradeRefresh } from './grade-monitor';
 
 const NEXUS_LOG_PREFIX = '[SIASE Plus Nexus SW]';
 const NEXUS_REQUEST_TIMEOUT_MS = 10000;
+const UANL_NEWS_URL = 'https://www.uanl.mx/noticias/';
 
 function redactNexusLogValue(value: string): string {
   return value
@@ -155,6 +157,47 @@ async function handleNexusPortalRequest(
   }
 }
 
+async function handleUanlNewsRequest(
+  _message: UanlNewsRequestMessage,
+  sendResponse: (response: NexusApiResponseMessage) => void
+): Promise<void> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), NEXUS_REQUEST_TIMEOUT_MS);
+    const response = await fetch(UANL_NEWS_URL, {
+      cache: 'no-store',
+      credentials: 'omit',
+      headers: {
+        Accept: 'text/html,application/xhtml+xml'
+      },
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    const text = await response.text();
+    sendResponse({
+      ok: response.ok,
+      status: response.status,
+      data: {
+        body: text,
+        url: response.url
+      },
+      debug: {
+        responseType: response.headers.get('content-type') || undefined
+      }
+    });
+  } catch (error) {
+    sendResponse({
+      ok: false,
+      status: 0,
+      error: error instanceof Error ? error.message : 'Could not load UANL news',
+      debug: {
+        errorName: error instanceof Error ? error.name : 'UnknownError'
+      }
+    });
+  }
+}
+
 export function initializeServiceWorker(): void {
   chrome.runtime.onInstalled.addListener(() => {
     void registerGradeCheckAlarm();
@@ -178,6 +221,11 @@ export function initializeServiceWorker(): void {
 
     if (message.type === 'NEXUS_PORTAL_REQUEST') {
       void handleNexusPortalRequest(message, sendResponse);
+      return true;
+    }
+
+    if (message.type === 'UANL_NEWS_REQUEST') {
+      void handleUanlNewsRequest(message, sendResponse);
       return true;
     }
 

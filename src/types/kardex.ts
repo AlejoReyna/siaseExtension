@@ -17,4 +17,5 @@ export interface KardexSummary {
   progressPercent: number;        // (completados / requeridos) * 100
   average: number | undefined;    // promedio simple de materias aprobadas
   capturedAt: string;             // ISO 8601
+  sessionKey?: string;             // usuario/sesión SIASE usada para evitar snapshots cruzados
 }

@@ -16,6 +16,7 @@ const COL = {
 // Solo el total acumulado aparece en un <DIV> al final del documento con este patrón:
 // "TOTAL..............: 138 de 220"
 const CREDIT_TOTAL_PATTERN = /TOTAL[.\s]+:\s*(\d+)\s*de\s*(\d+)/i;
+const AVERAGE_PATTERN = /promedio(?:\s+general)?[.\s:]*([6-9]\d|100)(?:[.,](\d{1,2}))?/i;
 
 function parseScore(raw: string): number | undefined {
   const trimmed = raw.trim();
@@ -45,15 +46,26 @@ function extractCreditsFromBody(bodyText: string): { completed: number; required
   return { completed, required };
 }
 
+function extractAverageFromBody(bodyText: string): number | undefined {
+  const match = bodyText.match(AVERAGE_PATTERN);
+  if (!match) return undefined;
+
+  const decimal = match[2] ? `.${match[2]}` : '';
+  const value = Number(`${match[1]}${decimal}`);
+  return Number.isFinite(value) && value >= 0 && value <= 100 ? value : undefined;
+}
+
 export function parseKardexSummary(document: Document): KardexSummary {
   // ── 1. Extraer créditos del body (fuera de las tablas, en DIVs al final)
   const bodyText = document.body?.innerText ?? document.body?.textContent ?? '';
   const credits = extractCreditsFromBody(bodyText);
+  const domAverage = extractAverageFromBody(bodyText);
 
   console.log(LOG, 'créditos extraídos del body', {
     raw: bodyText.match(/TOTAL.{0,30}/i)?.[0],
     resultado: credits,
   });
+  console.log(LOG, 'promedio extraído del body', { resultado: domAverage });
 
   // ── 2. Parsear filas de materias de la tabla principal
   // Estrategia: buscar la tabla que contiene una fila con "Sem." en j=0 (encabezado del kardex).
@@ -161,10 +173,11 @@ export function parseKardexSummary(document: Document): KardexSummary {
   const rawAverage = passed.length > 0 ? rawSum / passed.length : undefined;
 
   // Guard: el promedio debe estar entre 0 y 100; si no, hay un error de parsing
-  const average =
+  const calculatedAverage =
     rawAverage !== undefined && rawAverage >= 0 && rawAverage <= 100
       ? Math.round(rawAverage * 100) / 100
       : undefined;
+  const average = domAverage ?? calculatedAverage;
 
   if (rawAverage !== undefined && (rawAverage < 0 || rawAverage > 100)) {
     console.error(LOG, `promedio fuera de rango (${rawAverage}) — error de parsing`, {

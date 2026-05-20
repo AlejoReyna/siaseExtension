@@ -1,0 +1,1 @@
+import{t as e}from"./center-ui-ri9NULPS.js";import{r as t,t as n}from"./single-view-layout-CYTgkO3R.js";async function r(r){window.name===`center`&&(t(`center-frame initialize`),n(),e(r))}r(document);

@@ -14,6 +14,8 @@ export interface StorageSchema {
   kardexSnapshot: KardexSummary;
   /** Query params de sesión de WebSpeed capturados del frame top/left de default.htm */
   siaseSessionParams: Record<string, string>;
+  /** ISO timestamp for the last successful SIASE keep-alive ping. */
+  siaseKeepAliveAt: string;
 }
 
 export type StorageKey = keyof StorageSchema;

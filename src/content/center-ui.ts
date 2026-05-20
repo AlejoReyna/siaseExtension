@@ -465,19 +465,40 @@ async function hydrateShell(shell: HTMLElement): Promise<void> {
   renderShellData(shell, studentInfo, studentStatus, menuItems ?? []);
 }
 
+function isEmbeddedCareerCenter(frameDocument: Document): boolean {
+  try {
+    const frameWindow = frameDocument.defaultView;
+    const frameElement = frameWindow?.frameElement;
+    const parentFrameElement = frameWindow?.parent?.frameElement;
+
+    return (
+      parentFrameElement?.classList.contains('siase-career-content-frame') ||
+      frameElement?.closest?.('.siase-career-content-frame') !== null
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function initializeCenterGameUi(
   frameDocument: Document,
   url = new URL(location.href)
 ): void {
   exposeCenterLayoutDebug(frameDocument);
 
+  const embeddedCareerCenter = isEmbeddedCareerCenter(frameDocument);
+  const isMainCenter = url.pathname.toLowerCase().includes('maincenter.htm');
+
   frameDocument.body.classList.add('siase-plus-center', 'siase-plus-single-view');
-  frameDocument.body.classList.toggle(
-    'siase-plus-main-center',
-    url.pathname.toLowerCase().includes('maincenter.htm')
-  );
+  frameDocument.body.classList.toggle('siase-plus-embedded-career-center', embeddedCareerCenter);
+  frameDocument.body.classList.toggle('siase-plus-main-center', isMainCenter);
 
   logCenterLayoutSnapshot(frameDocument, 'initializeCenterGameUi (after body classes, before shell)');
+
+  if (embeddedCareerCenter && !isMainCenter) {
+    frameDocument.getElementById('siase-plus-shell')?.remove();
+    return;
+  }
 
   const questLabel = currentQuestLabel(url.pathname);
   const existingShell = frameDocument.getElementById('siase-plus-shell');

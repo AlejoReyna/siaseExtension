@@ -1,8 +1,13 @@
 const DEFAULT_THEME = 'institutional';
+const KNOWN_THEMES = new Set(['institutional', 'dark', 'minimal']);
+
+export function normalizeTheme(theme: string | null | undefined): string {
+  return theme && KNOWN_THEMES.has(theme) ? theme : DEFAULT_THEME;
+}
 
 export function getStoredTheme(frameDocument: Document): string {
   try {
-    return frameDocument.defaultView?.localStorage.getItem('siase-plus-theme') ?? DEFAULT_THEME;
+    return normalizeTheme(frameDocument.defaultView?.localStorage.getItem('siase-plus-theme'));
   } catch {
     return DEFAULT_THEME;
   }
@@ -17,8 +22,9 @@ export function setStoredTheme(frameDocument: Document, theme: string): void {
 }
 
 export function applyTheme(frameDocument: Document, theme: string): void {
-  frameDocument.body.dataset.siaseTheme = theme;
-  setStoredTheme(frameDocument, theme);
+  const normalizedTheme = normalizeTheme(theme);
+  frameDocument.body.dataset.siaseTheme = normalizedTheme;
+  setStoredTheme(frameDocument, normalizedTheme);
 }
 
 export function applyStoredTheme(frameDocument: Document): void {

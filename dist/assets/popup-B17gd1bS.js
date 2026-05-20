@@ -1,4 +1,4 @@
-const POPUP_ASCII_ART = String.raw`
+import{n as e,r as t,s as n,t as r}from"./jsx-runtime-CpzHkGBj.js";import"./modulepreload-polyfill-Cf3xff8G.js";var i=n(t(),1),a=n(e(),1),o=r(),s=String.raw`
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⢂⡜⣪⣶⣿⣿⣿⣿⣿⣿⡻⣜⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⡇⠠⠐⠀⠂⢆⡙⣮⢏⡷⣹⣜⣣⡟⣭⡟⣽⣻⣿
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠈⡆⢹⣿⣿⣿⣿⣿⣿⣿⣷⣎⡱⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠇⠀⠀⡀⠡⠦⡹⣜⢯⣞⡷⣞⣷⣻⢷⣻⢧⣿⣿
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⠰⡈⢿⣿⣿⣿⣿⣿⣿⣷⡞⣡⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢀⠄⡈⠠⢄⠱⣪⢕⣮⣛⡾⣿⣽⣾⣟⣿⣿⣿⣿⣿
@@ -48,49 +48,4 @@ const POPUP_ASCII_ART = String.raw`
 ⣿⣿⣬⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⣉⡢⡀⠈⠢⡀⠀⠀⡇⠇⠀⠀⢀⠇⠀⠀⢀⣿⠇⡈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠀⠻⣊⡢⡀⠈⠒⠄⡇⡄⣠⣄⠘⢸⠀⠀⣾⠏⡰⣱⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡠⠀⠙⢼⢮⡕⢀⢀⡀⡇⢿⣿⣀⢻⡄⣽⠏⡰⣱⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-`;
-
-export function PopupApp(): JSX.Element {
-  return (
-    <main
-      className="relative box-border flex w-full max-w-full flex-col items-center justify-center self-center overflow-hidden rounded-2xl border-2 border-solid p-3 font-sans antialiased text-white"
-      style={{
-        backgroundColor: '#000000',
-        color: '#ffffff',
-        borderColor: '#000000',
-      }}
-    >
-      <div className="relative flex h-full min-h-[212px] w-full max-w-full flex-col items-center justify-center overflow-hidden rounded-xl bg-black text-center">
-        <div
-          className="absolute inset-0 flex items-center justify-center overflow-hidden bg-black"
-          aria-label="Arte ASCII del proyecto"
-        >
-          <pre
-            aria-hidden
-            className="m-0 max-w-none font-mono text-cyan-100"
-            style={{
-              transform: 'translate(1px, -1px)',
-              transformOrigin: 'center',
-              fontSize: '5.55px',
-              lineHeight: 0.78,
-              letterSpacing: 0,
-              color: '#dffbff',
-              textShadow: '0 0 5px rgba(125, 249, 255, 0.42)',
-              whiteSpace: 'pre',
-            }}
-          >
-            {POPUP_ASCII_ART}
-          </pre>
-        </div>
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.62) 66%, rgba(0,0,0,0.86))',
-          }}
-          aria-hidden
-        />
-      </div>
-    </main>
-  );
-}
+`;function c(){return(0,o.jsx)(`main`,{className:`relative box-border flex w-full max-w-full flex-col items-center justify-center self-center overflow-hidden rounded-2xl border-2 border-solid p-3 font-sans antialiased text-white`,style:{backgroundColor:`#000000`,color:`#ffffff`,borderColor:`#000000`},children:(0,o.jsxs)(`div`,{className:`relative flex h-full min-h-[212px] w-full max-w-full flex-col items-center justify-center overflow-hidden rounded-xl bg-black text-center`,children:[(0,o.jsx)(`div`,{className:`absolute inset-0 flex items-center justify-center overflow-hidden bg-black`,"aria-label":`Arte ASCII del proyecto`,children:(0,o.jsx)(`pre`,{"aria-hidden":!0,className:`m-0 max-w-none font-mono text-cyan-100`,style:{transform:`translate(1px, -1px)`,transformOrigin:`center`,fontSize:`5.55px`,lineHeight:.78,letterSpacing:0,color:`#dffbff`,textShadow:`0 0 5px rgba(125, 249, 255, 0.42)`,whiteSpace:`pre`},children:s})}),(0,o.jsx)(`div`,{className:`pointer-events-none absolute inset-0`,style:{background:`linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.62) 66%, rgba(0,0,0,0.86))`},"aria-hidden":!0})]})})}a.createRoot(document.getElementById(`root`)).render((0,o.jsx)(i.StrictMode,{children:(0,o.jsx)(c,{})}));

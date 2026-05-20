@@ -1,13 +1,16 @@
 import type {
   NexusApiRequestMessage,
   NexusApiResponseMessage,
-  NexusPortalRequestMessage
+  NexusPortalRequestMessage,
+  UanlNewsRequestMessage
 } from '@/types/chrome-messages';
 import type { MenuItem } from '@/types/menu';
-import { parseMenuItems } from '@/utils/parser/menu';
+import type { StudentInfo } from '@/types/student';
+import { categorizeMenuItems, parseMenuItems } from '@/utils/parser/menu';
 import { parseKardexSummary } from '@/utils/parser/kardex';
+import { parseStudentInfo } from '@/utils/parser/student';
 import { getStorageValue, setStorageValue } from '@/utils/storage';
-import { applyStoredTheme } from './theme';
+import { applyStoredTheme, applyTheme, getStoredTheme } from './theme';
 
 const PANEL_IDS = ['siase', 'correo', 'nexus', 'codice'] as const;
 type PanelId = (typeof PANEL_IDS)[number];
@@ -19,12 +22,19 @@ const NEXUS_CACHE_TTL = 60 * 60 * 1000;
 
 const KARDEX_URL = 'https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/econkdx01.htm';
 const KARDEX_CACHE_TTL = 60 * 60 * 1000; // 1 hora
+const UANL_NEWS_URL = 'https://www.uanl.mx/noticias/';
+const UANL_NEWS_LIMIT = 5;
+const SIASE_KEEPALIVE_URL = 'https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/maincenter.htm';
+const SIASE_KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000;
+const SIASE_EXPIRED_FORM_RE = /La sesi[oó]n del formulario ha expirado por seguridad o es inv[aá]lida/i;
 
 /** Margen de seguridad: invalidar 2 min antes de que Nexus expire la sesión */
 const NEXUS_TOKEN_EXPIRY_MARGIN_MS = 2 * 60 * 1000;
 /** Fallback conservador cuando la sesión no trae FechaInicio/TiempoRestante */
 const NEXUS_TOKEN_TTL_FALLBACK = 4 * 60 * 60 * 1000;
 const NEXUS_LOG_PREFIX = '[SIASE Plus Nexus]';
+const SIASE_SESSION_LOG_PREFIX = '[SIASE Plus Session]';
+let siaseKeepAliveTimer: number | undefined;
 
 /** Actividades renderizadas del widget Nexus por documento (iframe SIASE) para enlazar «Agregar al calendario». */
 const nexusActivitiesByDocument = new WeakMap<Document, NexusActivity[]>();
@@ -114,6 +124,17 @@ interface NexusActivity {
   esHoy: boolean;
 }
 
+interface UanlNewsItem {
+  title: string;
+  url: string;
+  meta: string;
+}
+
+interface UanlNewsPageResponse {
+  body?: string;
+  url?: string;
+}
+
 type NexusCachedActivity = Omit<NexusActivity, 'fechaLimite'> & { fechaLimite: string };
 
 class NexusAuthError extends Error {
@@ -136,9 +157,11 @@ function iconMarkup(name: string): string {
     chevronLeft: '<path d="m14 18-6-6 6-6"/>',
     chevronRight: '<path d="m10 18 6-6-6-6"/>',
     download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+    home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h5v-5h4v5h5v-9.5"/>',
     mail: '<path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/>',
     message: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/>',
     logout: '<path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 19V5a2 2 0 0 0-2-2h-6M13 21h6a2 2 0 0 0 2-2"/>',
+    gear: '<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2a2 2 0 1 1-4 0V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 1 1 4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H2.8a2 2 0 1 1 0-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.2a2 2 0 1 1 4 0V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/>',
     receipt: '<path d="M6 3h12v18l-2-1-2 1-2-1-2 1-2-1-2 1V3Z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
     services:
       '<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/><path d="m3 18 9 5 9-5"/>',
@@ -167,6 +190,92 @@ function parseJson<T>(raw: string | null, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function normalizeText(value: unknown): string {
+  return String(value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function isLikelyUanlNewsUrl(url: URL): boolean {
+  const hostname = url.hostname.replace(/^www\./, '');
+  if (hostname === 'vidauniversitaria.uanl.mx') return true;
+  if (hostname !== 'uanl.mx') return false;
+
+  const path = url.pathname.replace(/\/+$/, '');
+  return path.startsWith('/noticias/') && path !== '/noticias';
+}
+
+function inferUanlNewsMeta(anchor: HTMLAnchorElement, fallbackUrl: string): string {
+  const block = anchor.closest<HTMLElement>(
+    'article, li, .post, .card, .noticia, .item, [class*="post"], [class*="card"], [class*="noticia"]'
+  );
+  const blockText = normalizeText(block?.textContent ?? '');
+  const categoryPattern =
+    'Académico|Academico|Actualidad|Arte y Cultura|Ciencia y Tecnología|Ciencia y Tecnologia|Deportes|Estudiantiles|Institucional|Internacional|Investigación|Investigacion|Responsabilidad|Salud|Sustentabilidad|Vinculación|Vinculacion';
+  const monthPattern =
+    'Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic|Enero|Febrero|Marzo|Abril|Mayo|Junio|Julio|Agosto|Septiembre|Octubre|Noviembre|Diciembre';
+  const metaMatch = blockText.match(new RegExp(`(${categoryPattern})\\s+(${monthPattern})\\s+\\d{4}`, 'i'));
+  if (metaMatch) return metaMatch[0];
+
+  try {
+    const url = new URL(fallbackUrl);
+    if (url.hostname.includes('vidauniversitaria')) return 'Vida Universitaria';
+  } catch {
+    // El enlace ya se validó antes; esta rama sólo protege contra strings inesperados.
+  }
+
+  return 'UANL';
+}
+
+function collectUanlNewsItems(anchors: HTMLAnchorElement[], baseUrl: string): UanlNewsItem[] {
+  const seen = new Set<string>();
+  const items: UanlNewsItem[] = [];
+
+  for (const anchor of anchors) {
+    const rawHref = anchor.getAttribute('href');
+    if (!rawHref) continue;
+
+    let url: URL;
+    try {
+      url = new URL(rawHref, baseUrl);
+    } catch {
+      continue;
+    }
+
+    if (!isLikelyUanlNewsUrl(url)) continue;
+
+    const title = normalizeText(anchor.textContent);
+    if (title.length < 12 || /^leer nota$/i.test(title) || /^compartir:?$/i.test(title)) continue;
+
+    const key = url.href.replace(/\/$/, '');
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    items.push({
+      title,
+      url: url.href,
+      meta: inferUanlNewsMeta(anchor, url.href)
+    });
+
+    if (items.length >= UANL_NEWS_LIMIT) break;
+  }
+
+  return items;
+}
+
+function parseUanlNews(html: string, baseUrl = UANL_NEWS_URL): UanlNewsItem[] {
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  const preferredAnchors = Array.from(
+    parsed.querySelectorAll<HTMLAnchorElement>(
+      'main h2 a[href], main h3 a[href], article h2 a[href], article h3 a[href], .card h2 a[href], .card h3 a[href], .post h2 a[href], .post h3 a[href]'
+    )
+  );
+  const preferredItems = collectUanlNewsItems(preferredAnchors, baseUrl);
+  if (preferredItems.length >= UANL_NEWS_LIMIT) return preferredItems;
+
+  const fallbackAnchors = Array.from(parsed.querySelectorAll<HTMLAnchorElement>('a[href]'));
+  const fallbackItems = collectUanlNewsItems(fallbackAnchors, baseUrl);
+  return fallbackItems.slice(0, UANL_NEWS_LIMIT);
 }
 
 function logNexus(level: 'debug' | 'info' | 'warn' | 'error', message: string, details?: unknown): void {
@@ -568,6 +677,20 @@ async function obtenerSesionDesdeIframeNexus(frameDocument: Document): Promise<N
 
   logNexus('warn', 'no se capturo sesion Nexus despues del iframe oculto');
   return null;
+}
+
+async function obtenerSesionNexusCapturada(frameDocument: Document): Promise<NexusAuthResult | null> {
+  const session = await leerSesionNexusCapturada();
+  if (!session?.Sesion?.Token) return null;
+
+  const frameWindow = frameDocument.defaultView ?? window;
+  guardarSesionNexus(frameWindow, session.Sesion);
+
+  return {
+    token: session.Sesion.Token,
+    areaAcademicaId: session.Sesion.AreaAcademicaId,
+    rolId: session.Sesion.RolId ?? 5
+  };
 }
 
 async function obtenerPayloadsDesdePortalNexus(frameDocument: Document): Promise<SiasePayloadCandidate[]> {
@@ -1382,18 +1505,16 @@ async function obtenerTokenNexus(frameDocument: Document): Promise<NexusAuthResu
   const cached = leerSesionNexus(frameWindow);
   if (cached) return cached;
 
-  const iframeSession = await obtenerSesionDesdeIframeNexus(frameDocument);
-  if (iframeSession) return iframeSession;
+  const capturedSession = await obtenerSesionNexusCapturada(frameDocument);
+  if (capturedSession) return capturedSession;
 
   const loginActionPayloads = readNexusLoginPayloadCandidates(frameWindow);
   const payloads = [...loginActionPayloads, ...construirPayloadSIASE(frameDocument)];
   const hasCgiCredentials = payloads.some((candidate) => candidate.label !== 'empty-body');
   if (!hasCgiCredentials) {
-    const portalPayloads = await obtenerPayloadsDesdePortalNexus(frameDocument);
-    payloads.unshift(...portalPayloads);
     logNexus(
       'info',
-      'payloads tras inspeccionar portal Nexus',
+      'sin credenciales CGI reutilizables; se evita tocar el formulario legacy automaticamente',
       payloads.map((candidate) => ({
         label: candidate.label,
         body: summarizePayload(candidate.payload)
@@ -1583,8 +1704,86 @@ function shouldEnhanceCareerLanding(): boolean {
   return window.name === 'center' || window.top === window;
 }
 
-function findStudentEmail(frameDocument: Document): string {
-  return frameDocument.querySelector('#correo a.style3')?.textContent?.trim() || 'correo@uanl.edu.mx';
+function cleanStudentDisplayName(value: string | undefined): string {
+  const cleaned = String(value ?? '')
+    .replace(/\bm\d+\b/gi, '')
+    .replace(/\bmatr[ií]cula\b:?\s*\d*/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || 'Estudiante UANL';
+}
+
+function studentInitialFromName(name: string): string {
+  const first = cleanStudentDisplayName(name)
+    .split(/\s+/)
+    .find((part) => part && !/^\d+$/.test(part) && !/^uanl$/i.test(part));
+  return first?.charAt(0).toLocaleUpperCase('es-MX') || 'U';
+}
+
+function studentEmailFromInfo(frameDocument: Document, studentInfo?: StudentInfo): string {
+  const fromLegacy = frameDocument.querySelector('#correo a.style3')?.textContent?.trim();
+  if (fromLegacy?.includes('@')) return fromLegacy;
+
+  const mailAnchor = frameDocument.querySelector<HTMLAnchorElement>('a[href^="mailto:"]');
+  if (mailAnchor?.href) {
+    try {
+      const path = decodeURIComponent(new URL(mailAnchor.href).pathname);
+      if (path.includes('@')) return path;
+    } catch {
+      // Ignore malformed legacy hrefs.
+    }
+  }
+
+  const matricula = studentInfo?.matricula?.trim();
+  if (matricula && /^\d{5,}$/u.test(matricula)) return `${matricula}@uanl.edu.mx`;
+
+  return 'correo@uanl.edu.mx';
+}
+
+function readStudentInfoFromFrames(frameDocument: Document): StudentInfo | undefined {
+  const frameWindow = frameDocument.defaultView;
+  const parentDocument = frameWindow?.parent?.document;
+  const topFrame = parentDocument?.querySelector<HTMLFrameElement>('frame[name="top"]');
+  const leftFrame = parentDocument?.querySelector<HTMLFrameElement>('frame[name="left"]');
+  const topDocument = topFrame?.contentDocument;
+  const leftDocument = leftFrame?.contentDocument;
+  if (!topDocument) return undefined;
+
+  const parsed = parseStudentInfo(topDocument, leftDocument ?? undefined);
+  return parsed.name || parsed.matricula || parsed.program || parsed.plan ? parsed : undefined;
+}
+
+function applyStudentHeader(wrapper: HTMLElement, frameDocument: Document, studentInfo?: StudentInfo): void {
+  const name = cleanStudentDisplayName(studentInfo?.name);
+  const email = studentEmailFromInfo(frameDocument, studentInfo);
+
+  const nameEl = wrapper.querySelector<HTMLElement>('[data-siase-student-name]');
+  const emailEl = wrapper.querySelector<HTMLElement>('[data-siase-student-email]');
+  const avatarEl = wrapper.querySelector<HTMLElement>('[data-siase-student-avatar]');
+
+  if (nameEl) nameEl.textContent = name;
+  if (emailEl) emailEl.textContent = email;
+  if (avatarEl) avatarEl.textContent = studentInitialFromName(name);
+}
+
+async function hydrateStudentHeader(wrapper: HTMLElement, frameDocument: Document): Promise<void> {
+  const fromStorage = await getStorageValue('studentInfo');
+  const fromFrames = readStudentInfoFromFrames(frameDocument);
+  const merged: StudentInfo | undefined =
+    fromStorage || fromFrames
+      ? {
+          name: fromFrames?.name || fromStorage?.name || '',
+          matricula: fromFrames?.matricula || fromStorage?.matricula || '',
+          program: fromFrames?.program || fromStorage?.program,
+          faculty: fromFrames?.faculty || fromStorage?.faculty,
+          plan: fromFrames?.plan || fromStorage?.plan
+        }
+      : undefined;
+
+  if (merged) {
+    applyStudentHeader(wrapper, frameDocument, merged);
+    await setStorageValue('studentInfo', merged);
+  }
 }
 
 function getCareerLinks(frameDocument: Document): HTMLAnchorElement[] {
@@ -1735,24 +1934,47 @@ function renderSiaseMenu(wrapper: HTMLElement, items: MenuItem[]): void {
   const grid = wrapper.querySelector<HTMLElement>('[data-siase-career-rail-menu]');
   if (!grid || !items.length) return;
 
+  const groupLabels: Record<MenuItem['category'], string> = {
+    academic: 'Academico',
+    schedule: 'Horario',
+    payments: 'Pagos',
+    services: 'Servicios',
+    profile: 'Perfil',
+    other: 'Otros'
+  };
+
   grid.replaceChildren(
-    ...items.map((item) => {
-      const button = grid.ownerDocument.createElement('button');
-      button.type = 'button';
-      button.className = `siase-career-quick-card siase-career-menu-card siase-career-menu-card--${item.category}`;
-      button.dataset.siaseMenuHref = item.href;
-      button.title = item.label;
-      button.setAttribute('aria-label', item.label);
+    ...categorizeMenuItems(items).map((group) => {
+      const groupEl = grid.ownerDocument.createElement('div');
+      groupEl.className = `siase-career-rail-group siase-career-rail-group--${group.category}`;
+      groupEl.setAttribute('role', 'group');
+      groupEl.setAttribute('aria-label', groupLabels[group.category]);
 
-      const icon = grid.ownerDocument.createElement('span');
-      icon.className = 'siase-career-quick-card__icon';
-      icon.innerHTML = iconMarkup(menuIconName(item));
+      const marker = grid.ownerDocument.createElement('span');
+      marker.className = 'siase-career-rail-group__marker';
+      marker.setAttribute('aria-hidden', 'true');
+      groupEl.append(marker);
 
-      const label = grid.ownerDocument.createElement('strong');
-      label.textContent = item.label;
+      group.items.forEach((item) => {
+        const button = grid.ownerDocument.createElement('button');
+        button.type = 'button';
+        button.className = `siase-career-quick-card siase-career-menu-card siase-career-menu-card--${item.category}`;
+        button.dataset.siaseMenuHref = item.href;
+        button.title = item.label;
+        button.setAttribute('aria-label', item.label);
 
-      button.append(icon, label);
-      return button;
+        const icon = grid.ownerDocument.createElement('span');
+        icon.className = 'siase-career-quick-card__icon';
+        icon.innerHTML = iconMarkup(menuIconName(item));
+
+        const label = grid.ownerDocument.createElement('strong');
+        label.textContent = item.label;
+
+        button.append(icon, label);
+        groupEl.append(button);
+      });
+
+      return groupEl;
     })
   );
 }
@@ -1766,6 +1988,38 @@ function navigateSiaseCenter(wrapper: HTMLElement, href: string): void {
   centerFrame.src = href;
   wrapper.querySelectorAll<HTMLElement>('[data-siase-menu-href]').forEach((button) => {
     button.classList.toggle('is-active', button.dataset.siaseMenuHref === href);
+  });
+}
+
+function mainCenterUrlFromSessionFrames(rootDocument: Document): string {
+  const topFrame = rootDocument.querySelector<HTMLFrameElement>('frame[name="top"]');
+  const topSrc = topFrame?.src ?? topFrame?.getAttribute('src') ?? '';
+
+  try {
+    const topUrl = new URL(topSrc, 'https://deimos.dgi.uanl.mx');
+    return `${SIASE_KEEPALIVE_URL}${topUrl.search}`;
+  } catch {
+    return SIASE_KEEPALIVE_URL;
+  }
+}
+
+function navigateCareerHome(wrapper: HTMLElement): void {
+  const frame = wrapper.querySelector<HTMLIFrameElement>(`iframe[name="${SIASE_CONTENT_FRAME_NAME}"]`);
+  const rootDocument = frame ? getSiaseFrameDocument(frame) : null;
+  const centerFrame = rootDocument ? getSiaseCenterFrame(rootDocument) : null;
+
+  if (!centerFrame || !rootDocument) {
+    showPanel(wrapper.ownerDocument, 'siase');
+    wrapper.querySelector('.siase-career-insight-wide')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+    return;
+  }
+
+  centerFrame.src = mainCenterUrlFromSessionFrames(rootDocument);
+  wrapper.querySelectorAll<HTMLElement>('[data-siase-menu-href]').forEach((button) => {
+    button.classList.remove('is-active');
   });
 }
 
@@ -1792,9 +2046,57 @@ function captureSiaseSessionParams(rootDocument: Document): void {
     });
 
     void setStorageValue('siaseSessionParams', params);
+    scheduleSiaseKeepAlive(rootDocument.defaultView ?? window);
   } catch (err) {
     console.warn(KARDEX_LOG, 'no se pudieron capturar params de sesión', err);
   }
+}
+
+async function pingSiaseKeepAlive(): Promise<void> {
+  const sessionParams = await getStorageValue('siaseSessionParams');
+  if (!sessionParams?.['HTMLtrim']) return;
+
+  const keepAliveUrl = `${SIASE_KEEPALIVE_URL}?${new URLSearchParams(sessionParams).toString()}`;
+
+  try {
+    const response = await fetch(keepAliveUrl, {
+      cache: 'no-store',
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      console.warn(SIASE_SESSION_LOG_PREFIX, 'keep-alive failed', { status: response.status });
+      return;
+    }
+
+    const html = await response.text();
+    if (SIASE_EXPIRED_FORM_RE.test(html)) {
+      console.warn(SIASE_SESSION_LOG_PREFIX, 'keep-alive saw expired form response');
+      return;
+    }
+
+    await setStorageValue('siaseKeepAliveAt', new Date().toISOString());
+    console.debug(SIASE_SESSION_LOG_PREFIX, 'keep-alive ok');
+  } catch (error) {
+    console.warn(SIASE_SESSION_LOG_PREFIX, 'keep-alive request failed', error);
+  }
+}
+
+function scheduleSiaseKeepAlive(frameWindow: Window): void {
+  if (siaseKeepAliveTimer !== undefined) return;
+
+  void pingSiaseKeepAlive();
+  siaseKeepAliveTimer = frameWindow.setInterval(() => {
+    void pingSiaseKeepAlive();
+  }, SIASE_KEEPALIVE_INTERVAL_MS);
+}
+
+function isExpiredSiaseFormPage(frameDocument: Document): boolean {
+  if (/SIASE\s*-\s*Mensaje/i.test(frameDocument.title) && SIASE_EXPIRED_FORM_RE.test(frameDocument.body.textContent ?? '')) {
+    return true;
+  }
+
+  return SIASE_EXPIRED_FORM_RE.test(frameDocument.querySelector('#idMensaje')?.textContent ?? '');
 }
 
 function hydrateSiaseShellFromFrame(wrapper: HTMLElement, frame: HTMLIFrameElement): boolean {
@@ -1832,6 +2134,7 @@ function handleSiaseFrameLoad(wrapper: HTMLElement, frame: HTMLIFrameElement): v
       if (hydrated && !kardexTriggered) {
         kardexTriggered = true;
         const frameDoc = wrapper.ownerDocument;
+        void hydrateStudentHeader(wrapper, frameDoc);
         void fetchKardexInBackground(frameDoc);
       }
     }
@@ -1898,12 +2201,8 @@ function launchCareerService(frameDocument: Document, panelId: Exclude<PanelId, 
 function classifyLegacyStructure(frameDocument: Document): void {
   const [bannerTable, layoutTable] = Array.from(frameDocument.body.querySelectorAll('table'));
 
-  bannerTable?.classList.add('siase-plus-career-banner', 'siase-plus-career-footer');
   layoutTable?.classList.add('siase-plus-career-layout');
-
-  if (bannerTable && bannerTable.parentElement === frameDocument.body) {
-    frameDocument.body.append(bannerTable);
-  }
+  bannerTable?.remove();
 
   PANEL_IDS.forEach((panelId) => {
     frameDocument.getElementById(panelId)?.classList.add('siase-plus-career-panel');
@@ -1989,6 +2288,87 @@ function handleCareerLogout(frameDocument: Document): void {
   window.top?.location.assign('/');
 }
 
+function renderUanlNewsMessage(wrapper: HTMLElement, title: string, detail: string): void {
+  const list = wrapper.querySelector<HTMLElement>('[data-siase-uanl-news-list]');
+  if (!list) return;
+
+  const article = list.ownerDocument.createElement('article');
+  article.className = 'siase-career-news-card__status';
+
+  const strong = list.ownerDocument.createElement('strong');
+  strong.textContent = title;
+
+  const em = list.ownerDocument.createElement('em');
+  em.textContent = detail;
+
+  article.append(strong, em);
+  list.replaceChildren(article);
+}
+
+function renderUanlNewsItems(wrapper: HTMLElement, items: UanlNewsItem[]): void {
+  const list = wrapper.querySelector<HTMLElement>('[data-siase-uanl-news-list]');
+  if (!list) return;
+
+  if (!items.length) {
+    renderUanlNewsMessage(wrapper, 'Noticias no disponibles', 'No se encontraron notas recientes en UANL.');
+    return;
+  }
+
+  list.replaceChildren(
+    ...items.map((item) => {
+      const article = list.ownerDocument.createElement('article');
+
+      const link = list.ownerDocument.createElement('a');
+      link.href = item.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = item.title;
+
+      const meta = list.ownerDocument.createElement('em');
+      meta.textContent = item.meta;
+
+      article.append(link, meta);
+      return article;
+    })
+  );
+}
+
+async function requestUanlNewsPage(): Promise<UanlNewsPageResponse> {
+  if (chrome.runtime?.id) {
+    const message: UanlNewsRequestMessage = { type: 'UANL_NEWS_REQUEST' };
+    const response = (await chrome.runtime.sendMessage(message)) as NexusApiResponseMessage;
+    if (!response.ok) {
+      throw new Error(response.error || `UANL news request failed (${response.status})`);
+    }
+
+    return (response.data ?? {}) as UanlNewsPageResponse;
+  }
+
+  const response = await fetch(UANL_NEWS_URL, { cache: 'no-store' });
+  if (!response.ok) throw new Error(`UANL news request failed (${response.status})`);
+  return {
+    body: await response.text(),
+    url: response.url
+  };
+}
+
+async function hydrateUanlNews(wrapper: HTMLElement): Promise<void> {
+  renderUanlNewsMessage(wrapper, 'Cargando noticias UANL', 'Consultando las notas mas recientes.');
+
+  try {
+    const page = await requestUanlNewsPage();
+    const items = parseUanlNews(page.body ?? '', page.url || UANL_NEWS_URL);
+    renderUanlNewsItems(wrapper, items);
+  } catch (error) {
+    console.warn('[SIASE Plus News] no se pudieron cargar noticias UANL', error);
+    renderUanlNewsMessage(
+      wrapper,
+      'Noticias no disponibles',
+      'No se pudo consultar www.uanl.mx en este momento.'
+    );
+  }
+}
+
 function createDashboardChrome(frameDocument: Document): HTMLElement {
   const careerLinks = getCareerLinks(frameDocument);
   const careerCount = careerLinks.length;
@@ -1996,7 +2376,10 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
   const initialCarouselIdx = careerCount > 0 ? careerCount - 1 : 0;
   const initialCarouselTitle =
     careerLinks[initialCarouselIdx]?.textContent?.replace(/\s+/g, ' ').trim() || 'Carrera';
-  const email = findStudentEmail(frameDocument);
+  const initialStudentInfo = readStudentInfoFromFrames(frameDocument);
+  const initialStudentName = cleanStudentDisplayName(initialStudentInfo?.name);
+  const initialStudentEmail = studentEmailFromInfo(frameDocument, initialStudentInfo);
+  const initialStudentInitial = studentInitialFromName(initialStudentName);
   const wrapper = frameDocument.createElement('section');
   wrapper.className = 'siase-career-dashboard';
   wrapper.innerHTML = `
@@ -2006,8 +2389,8 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
       </div>
       <div class="siase-career-nav__actions">
         <div class="siase-career-user">
-          <span class="siase-career-avatar">U</span>
-          <span><strong>Estudiante UANL</strong><em>${email}</em></span>
+          <span class="siase-career-avatar" data-siase-student-avatar>${escapeHtml(initialStudentInitial)}</span>
+          <span><strong data-siase-student-name>${escapeHtml(initialStudentName)}</strong><em data-siase-student-email>${escapeHtml(initialStudentEmail)}</em></span>
           ${iconMarkup('chevron')}
         </div>
       </div>
@@ -2032,6 +2415,9 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
     </div>
     <aside class="siase-career-system-sidebar" aria-label="Acceso rapido del sistema">
       <section class="siase-career-section siase-career-quick-panel siase-career-quick-panel--sidebar siase-entrance">
+        <button type="button" class="siase-career-rail-home" data-siase-career-home aria-label="Volver al inicio de SIASE">
+          ${iconMarkup('home')}
+        </button>
         <div class="siase-career-quick-grid" data-siase-career-rail-menu>
           <button type="button" data-siase-career-panel="siase" class="siase-career-quick-card is-active" aria-label="Ir a resumen y seleccion de carrera">
             <span class="siase-career-quick-card__icon siase-career-quick-card__icon--blue">${iconMarkup('book')}</span>
@@ -2055,9 +2441,30 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
           </button>
         </div>
         <div class="siase-career-legacy-slot" data-siase-career-legacy-slot></div>
-        <button type="button" class="siase-career-rail-logout" data-siase-career-logout aria-label="Cerrar sesion">
-          ${iconMarkup('logout')}
-        </button>
+        <div class="siase-career-rail-actions">
+          <div class="siase-career-theme-picker">
+            <button type="button" class="siase-career-rail-settings" data-siase-career-settings aria-label="Configurar vista" aria-expanded="false">
+              ${iconMarkup('gear')}
+            </button>
+            <div class="siase-career-theme-menu" data-siase-career-theme-menu hidden>
+              <button type="button" data-siase-career-theme-option="institutional">
+                <span class="siase-career-theme-swatch siase-career-theme-swatch--institutional"></span>
+                Institucional
+              </button>
+              <button type="button" data-siase-career-theme-option="dark">
+                <span class="siase-career-theme-swatch siase-career-theme-swatch--dark"></span>
+                Oscuro
+              </button>
+              <button type="button" data-siase-career-theme-option="minimal">
+                <span class="siase-career-theme-swatch siase-career-theme-swatch--minimal"></span>
+                Minimal
+              </button>
+            </div>
+          </div>
+          <button type="button" class="siase-career-rail-logout" data-siase-career-logout aria-label="Cerrar sesion">
+            ${iconMarkup('logout')}
+          </button>
+        </div>
       </section>
     </aside>
     <div class="siase-career-grid">
@@ -2113,13 +2520,11 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
                   id="siase-insight-metric-panel"
                   role="tabpanel"
                   aria-labelledby="siase-insight-tab-progress"
-                  data-kardex-progress="64"
-                  data-kardex-average="92.4"
                 >
-                  <strong class="siase-career-insight-wide__progress-percent">64%</strong>
+                  <strong class="siase-career-insight-wide__progress-percent">—</strong>
                   <div class="siase-career-insight-wide__metric-slot">
                     <div class="siase-career-insight-progress" aria-hidden="true">
-                      <span style="width: 64%"></span>
+                      <span style="width: 0%"></span>
                     </div>
                   </div>
                 </div>
@@ -2140,14 +2545,12 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
                   <h2>Actualidad UANL</h2>
                 </div>
               </div>
-              <article>
-                <strong>Consulta avisos institucionales</strong>
-                <em>Mantente atento a comunicados de Escolar y Archivo.</em>
-              </article>
-              <article>
-                <strong>Servicios digitales disponibles</strong>
-                <em>Correo universitario, Nexus y CODICE permanecen accesibles desde esta landing.</em>
-              </article>
+              <div class="siase-career-news-card__list" data-siase-uanl-news-list>
+                <article class="siase-career-news-card__status">
+                  <strong>Cargando noticias UANL</strong>
+                  <em>Consultando las notas mas recientes.</em>
+                </article>
+              </div>
             </section>
           </aside>
         </div>
@@ -2244,8 +2647,14 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
   });
 
   wrapper
+    .querySelector<HTMLButtonElement>('[data-siase-career-home]')
+    ?.addEventListener('click', () => navigateCareerHome(wrapper));
+
+  wrapper
     .querySelector<HTMLButtonElement>('[data-siase-career-logout]')
     ?.addEventListener('click', () => handleCareerLogout(frameDocument));
+
+  hydrateCareerThemeControls(wrapper, frameDocument);
 
   const insightCard = wrapper.querySelector<HTMLElement>('.siase-career-insight-card');
   insightCard?.addEventListener('click', (event) => {
@@ -2270,6 +2679,56 @@ function createDashboardChrome(frameDocument: Document): HTMLElement {
   return wrapper;
 }
 
+function hydrateCareerThemeControls(wrapper: HTMLElement, frameDocument: Document): void {
+  const settingsButton = wrapper.querySelector<HTMLButtonElement>('[data-siase-career-settings]');
+  const menu = wrapper.querySelector<HTMLElement>('[data-siase-career-theme-menu]');
+  if (!settingsButton || !menu) return;
+
+  const syncActiveTheme = (): void => {
+    const storedTheme = frameDocument.body.dataset.siaseTheme ?? getStoredTheme(frameDocument);
+    menu.querySelectorAll<HTMLButtonElement>('[data-siase-career-theme-option]').forEach((button) => {
+      const isActive = button.dataset.siaseCareerThemeOption === storedTheme;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
+    });
+  };
+
+  const closeMenu = (): void => {
+    menu.hidden = true;
+    settingsButton.setAttribute('aria-expanded', 'false');
+  };
+
+  settingsButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const shouldOpen = menu.hidden;
+    menu.hidden = !shouldOpen;
+    settingsButton.setAttribute('aria-expanded', String(shouldOpen));
+    if (shouldOpen) syncActiveTheme();
+  });
+
+  menu.querySelectorAll<HTMLButtonElement>('[data-siase-career-theme-option]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      applyTheme(frameDocument, button.dataset.siaseCareerThemeOption ?? 'institutional');
+      syncActiveTheme();
+      closeMenu();
+    });
+  });
+
+  frameDocument.addEventListener('click', (event) => {
+    if (menu.hidden || wrapper.contains(event.target as Node)) return;
+    closeMenu();
+  });
+
+  wrapper.addEventListener('click', (event) => {
+    const target = event.target as Node | null;
+    if (!target || settingsButton.contains(target) || menu.contains(target)) return;
+    closeMenu();
+  });
+
+  syncActiveTheme();
+}
+
 function moveLegacyPanelsIntoQuickPanel(frameDocument: Document): void {
   const slot = frameDocument.querySelector<HTMLElement>('[data-siase-career-legacy-slot]');
   if (!slot) return;
@@ -2285,7 +2744,9 @@ function moveLegacyPanelsIntoQuickPanel(frameDocument: Document): void {
 
 function injectDashboardChrome(frameDocument: Document): void {
   if (frameDocument.querySelector('.siase-career-dashboard')) return;
-  frameDocument.body.prepend(createDashboardChrome(frameDocument));
+  const dashboard = createDashboardChrome(frameDocument);
+  frameDocument.body.prepend(dashboard);
+  void hydrateStudentHeader(dashboard, frameDocument);
   moveLegacyPanelsIntoQuickPanel(frameDocument);
 }
 
@@ -2346,10 +2807,10 @@ function applyInsightMetricView(metricPanel: HTMLElement): void {
   }
 }
 
-function updateCreditProgressUI(data: CreditProgressUIData): void {
+function updateCreditProgressUI(frameDocument: Document, data: CreditProgressUIData): void {
   console.log(KARDEX_LOG, 'updateCreditProgressUI llamado', data);
 
-  const metricPanel = document.querySelector<HTMLElement>('#siase-insight-metric-panel');
+  const metricPanel = frameDocument.querySelector<HTMLElement>('#siase-insight-metric-panel');
   console.log(KARDEX_LOG, 'metricPanel', metricPanel ? 'encontrado' : 'NO ENCONTRADO (#siase-insight-metric-panel)');
 
   if (!metricPanel) return;
@@ -2369,14 +2830,26 @@ function updateCreditProgressUI(data: CreditProgressUIData): void {
   applyInsightMetricView(metricPanel);
 }
 
+function siaseSessionCacheKey(sessionParams: Record<string, string> | undefined): string | undefined {
+  if (!sessionParams) return undefined;
+  const user = sessionParams['HTMLUsuario'] || sessionParams['HTMLUsu'] || sessionParams['HTMLUser'];
+  const trim = sessionParams['HTMLtrim'];
+  if (!user && !trim) return undefined;
+  return [user, trim].filter(Boolean).join(':');
+}
+
 async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
+  const sessionParams = await getStorageValue('siaseSessionParams');
+  const sessionKey = siaseSessionCacheKey(sessionParams);
+
   // Fast path: servir desde cache si es reciente
   const cached = await getStorageValue('kardexSnapshot');
   if (cached) {
     const ageMs = Date.now() - new Date(cached.capturedAt).getTime();
     const averageIsValid = cached.average === undefined || (cached.average >= 0 && cached.average <= 100);
     const isUsable = (cached.totalCreditsCompleted > 0 || cached.average !== undefined) && averageIsValid;
-    if (ageMs < KARDEX_CACHE_TTL && isUsable) {
+    const matchesSession = !sessionKey || !cached.sessionKey || cached.sessionKey === sessionKey;
+    if (ageMs < KARDEX_CACHE_TTL && isUsable && matchesSession) {
       console.log(KARDEX_LOG, 'usando snapshot cacheado', {
         ageMs,
         capturedAt: cached.capturedAt,
@@ -2406,10 +2879,12 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
         }))
       );
 
-      updateCreditProgressUI({ ...cached, isEmpty: false });
+      updateCreditProgressUI(frameDocument, { ...cached, isEmpty: false });
       return;
     }
-    if (!isUsable) {
+    if (!matchesSession) {
+      console.log(KARDEX_LOG, 'snapshot de otra sesión/carrera, recargando');
+    } else if (!isUsable) {
       console.warn(KARDEX_LOG, 'snapshot cacheado inválido (sin datos), forzando recarga', {
         totalCreditsCompleted: cached.totalCreditsCompleted,
         average: cached.average,
@@ -2424,7 +2899,6 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
   // Slow path: fetch + DOMParser (sin iframe, sin JS del kardex, sin alert())
   // econkdx01.htm requiere los 10 query params de sesión WebSpeed (HTMLtrim, HTMLUsuario, etc.)
   // que se capturan de la URL del frame "top" cuando el usuario selecciona carrera.
-  const sessionParams = await getStorageValue('siaseSessionParams');
   if (!sessionParams || !sessionParams['HTMLtrim']) {
     console.warn(KARDEX_LOG, 'params de sesión SIASE no disponibles — selecciona una carrera primero');
     return;
@@ -2456,6 +2930,7 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
     }
 
     const summary = parseKardexSummary(doc);
+    summary.sessionKey = sessionKey;
     console.log(KARDEX_LOG, 'kardex parseado', {
       entries: summary.entries.length,
       totalCreditsCompleted: summary.totalCreditsCompleted,
@@ -2467,7 +2942,7 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
 
     await setStorageValue('kardexSnapshot', summary);
     console.log(KARDEX_LOG, 'snapshot guardado en storage, actualizando UI');
-    updateCreditProgressUI({ ...summary, isEmpty: false });
+    updateCreditProgressUI(frameDocument, { ...summary, isEmpty: false });
   } catch (err) {
     console.error(KARDEX_LOG, 'error al fetch/parsear kardex', err);
   }
@@ -2477,6 +2952,10 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
 
 export function initializeCareerLanding(frameDocument: Document): void {
   if (!shouldEnhanceCareerLanding()) return;
+  if (isExpiredSiaseFormPage(frameDocument)) {
+    console.warn(SIASE_SESSION_LOG_PREFIX, 'expired SIASE form page detected; skipping dashboard injection');
+    return;
+  }
 
   frameDocument.body.classList.add(
     'siase-plus-center',
@@ -2486,6 +2965,12 @@ export function initializeCareerLanding(frameDocument: Document): void {
   applyStoredTheme(frameDocument);
   classifyLegacyStructure(frameDocument);
   injectDashboardChrome(frameDocument);
+  const dashboard = frameDocument.querySelector<HTMLElement>('.siase-career-dashboard');
+  if (dashboard) {
+    void hydrateStudentHeader(dashboard, frameDocument);
+    void hydrateUanlNews(dashboard);
+  }
+  scheduleSiaseKeepAlive(frameDocument.defaultView ?? window);
   scheduleNexusWidget(frameDocument);
   // Carga el kardex en background (iframe oculto, mismo origen) — no bloquea el render
   void fetchKardexInBackground(frameDocument);

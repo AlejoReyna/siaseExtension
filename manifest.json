@@ -7,7 +7,7 @@
   "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
   "background": { "service_worker": "src/background/service-worker.ts", "type": "module" },
   "permissions": ["alarms", "notifications", "storage", "downloads"],
-  "host_permissions": ["https://deimos.dgi.uanl.mx/*", "https://api.nexus.uanl.mx/*", "https://plataformanexus.uanl.mx/*"],
+  "host_permissions": ["https://deimos.dgi.uanl.mx/*", "https://api.nexus.uanl.mx/*", "https://plataformanexus.uanl.mx/*", "https://www.uanl.mx/*"],
   "content_scripts": [
     {
       "matches": ["https://deimos.dgi.uanl.mx/*default.htm*"],
@@ -59,6 +59,13 @@
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/ecSitEst01.htm*"
       ],
       "js": ["src/content/router.ts"],
+      "css": ["src/content/styles/center.css"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/CdGymins01.htm*"],
+      "js": ["src/content/pages/gym-reservation-page.ts"],
       "css": ["src/content/styles/center.css"],
       "all_frames": true,
       "run_at": "document_idle"
