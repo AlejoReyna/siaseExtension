@@ -3,56 +3,48 @@ import { SmartSidebar } from '@/components/SmartSidebar';
 import { injectReactRoot } from '@/shadow-dom/inject-react-root';
 import { parseMenuItems } from '@/utils/parser/menu';
 import { getStorageValue, setStorageValue } from '@/utils/storage';
-import { collapseLegacyFrames, logFramesetState } from './single-view-layout';
+import { collapseLegacyFrames } from './single-view-layout';
 
 export async function initializeLeftFrame(frameDocument: Document): Promise<void> {
   if (window.name !== 'left') return;
 
-  logFramesetState('left-frame initialize');
   collapseLegacyFrames();
-  frameDocument.body.classList.add('siase-plus-left');
+  frameDocument.body.classList.add('siase-v2-left');
 
-  // --- Matricula & session ---
-  // The left frame holds the authoritative hidden inputs for the current
-  // session. Read them here and merge into studentInfo so the matricula
-  // field is always populated regardless of top-frame load order.
   const matricula =
     frameDocument.querySelector<HTMLInputElement>('input[name="HTMLUsuario"]')?.value ?? '';
-  const password =
-    frameDocument.querySelector<HTMLInputElement>('input[name="HTMLpassword"]')?.value ?? '';
-
   if (matricula) {
     const existing = await getStorageValue('studentInfo');
+    if (existing?.matricula && existing.matricula !== matricula) {
+      await chrome.storage.local.remove(['gradeSnapshot', 'scheduleSlots', 'kardexSnapshot']);
+    }
     await setStorageValue('studentInfo', {
       name: existing?.name ?? '',
-      program: existing?.program,
-      faculty: existing?.faculty,
-      plan: existing?.plan,
       ...existing,
-      // Always overwrite matricula with the authoritative value from the form.
       matricula
     });
   }
 
-  // Keep the password available for any future session-replay utilities,
-  // stored under the session key separate from the public studentInfo shape.
-  void chrome.storage.session?.set?.({ siasePwd: password }).catch((error) => {
-    console.debug('[SIASE Plus] chrome.storage.session unavailable in left frame', error);
-  });
-
-  // --- Menu ---
   const items = parseMenuItems(frameDocument);
+  const pinnedIds = (await getStorageValue('pinnedMenuIds')) ?? [];
   await setStorageValue('menuItems', items);
 
   injectReactRoot(
     createElement(SmartSidebar, {
       items,
       query: '',
-      pinnedIds: [],
+      pinnedIds,
       onQueryChange: () => undefined,
-      onTogglePinned: () => undefined
+      onTogglePinned: (id: string) => {
+        void getStorageValue('pinnedMenuIds').then((stored = []) => {
+          const next = stored.includes(id)
+            ? stored.filter((storedId) => storedId !== id)
+            : [...stored, id];
+          return setStorageValue('pinnedMenuIds', next);
+        });
+      }
     }),
-    { id: 'siase-plus-sidebar', document: frameDocument }
+    { id: 'siase-v2-sidebar', document: frameDocument }
   );
 }
 

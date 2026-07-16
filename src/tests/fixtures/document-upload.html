@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+  <body>
+    <center><h2>Carga de Documentos para Expediente</h2></center>
+    <form
+      name="mi_forma"
+      action="/cgi-bin/deya.sh/ecCargaDocto01.htm"
+      method="post"
+      enctype="multipart/form-data"
+    >
+      <input type="hidden" name="HTMLUsuario" value="[redacted]" />
+      <input type="hidden" name="HTMLtrim" value="[redacted]" />
+      <div id="idFormulario">
+        <table>
+          <tr>
+            <td>Tipo de Documento:</td>
+            <td>
+              <select id="idCve_Docto" name="HTMLCve_Docto">
+                <option>Tipo de Documento:</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Archivo:</td>
+            <td><input id="HTMLArchivo" name="HTMLArchivo" type="file" /></td>
+          </tr>
+        </table>
+      </div>
+    </form>
+    <div id="idContList">
+      <div id="idListado_wrapper" class="dataTables_wrapper">
+        <div id="idListado_filter" class="dataTables_filter">
+          <label>Buscar: <input type="search" /></label>
+        </div>
+        <table id="idListado" class="dataTable">
+          <thead>
+            <tr>
+              <th>Documento</th>
+              <th>Fecha Carga</th>
+              <th>Estatus</th>
+              <th>Comentario</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Documento anonimizado</td>
+              <td>01/01/2026</td>
+              <td>CARGADO</td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+        <div id="idListado_paginate" class="dataTables_paginate">
+          <a>Anterior</a><a>Siguiente</a>
+        </div>
+      </div>
+    </div>
+    <div id="idEnviarRevision">
+      <input id="idTermina" name="Terminar" type="button" value="Enviar a Revisión" />
+    </div>
+    <p>El estatus de su expediente es: CARGANDO DOCUMENTOS.</p>
+    <div class="progress">
+      <div id="idbarra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10">
+        Cargando Documentos
+      </div>
+    </div>
+    <div class="ui-dialog" role="dialog"><div id="idRevision"></div></div>
+    <div class="ui-dialog" role="dialog"><div id="idMensaje"></div></div>
+  </body>
+</html>

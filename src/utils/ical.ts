@@ -29,6 +29,11 @@ const WEEKDAY_TO_JS_DAY: Record<Weekday, number> = {
  * Returns the first date on or after `from` that falls on `weekday`,
  * with hours and minutes set to `HH:MM` from `timeStr`.
  */
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, (month ?? 1) - 1, day ?? 1);
+}
+
 function firstOccurrence(from: Date, weekday: Weekday, timeStr: string): Date {
   const [hh = 0, mm = 0] = timeStr.split(':').map(Number);
   const date = new Date(from);
@@ -49,8 +54,9 @@ function firstOccurrence(from: Date, weekday: Weekday, timeStr: string): Date {
  */
 export function generateScheduleIcs(slots: ScheduleSlot[], options: ScheduleExportOptions): string {
   const calendar = ical({ name: options.calendarName, timezone: options.timezone });
-  const semesterEnd = new Date(options.semesterEnd);
-  const semesterStart = new Date(options.semesterStart);
+  const semesterEnd = parseLocalDate(options.semesterEnd);
+  semesterEnd.setHours(23, 59, 59, 999);
+  const semesterStart = parseLocalDate(options.semesterStart);
 
   slots.forEach((slot) => {
     const startTime = UANL_TIME_SLOTS[slot.slotCode];

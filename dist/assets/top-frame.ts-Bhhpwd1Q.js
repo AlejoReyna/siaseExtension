@@ -1,1 +1,0 @@
-import{n as e,t}from"./storage-DPPjqHu1.js";import{t as n}from"./student-DzLPJtzr.js";import{r,t as i}from"./single-view-layout-CYTgkO3R.js";async function a(a){if(window.name!==`top`)return;r(`top-frame initialize`),i(),a.body.classList.add(`siase-plus-top`);let o=n(a),s=await t(`studentInfo`);await e(`studentInfo`,{...s,...o,matricula:s?.matricula||o.matricula})}a(document);

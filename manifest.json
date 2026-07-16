@@ -4,10 +4,20 @@
   "version": "0.1.0",
   "description": "Un proyecto estudiantil para mejorar la experiencia de usuario de los alumnos de la UANL.",
   "action": { "default_title": "Oh My SIASE", "default_popup": "src/popup/popup.html" },
-  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "background": { "service_worker": "src/background/service-worker.ts", "type": "module" },
   "permissions": ["alarms", "notifications", "storage", "downloads"],
-  "host_permissions": ["https://deimos.dgi.uanl.mx/*", "https://api.nexus.uanl.mx/*", "https://plataformanexus.uanl.mx/*", "https://www.uanl.mx/*"],
+  "host_permissions": [
+    "https://deimos.dgi.uanl.mx/*",
+    "https://api.nexus.uanl.mx/*",
+    "https://plataformanexus.uanl.mx/*",
+    "https://www.uanl.mx/*"
+  ],
   "content_scripts": [
     {
       "matches": ["https://deimos.dgi.uanl.mx/*default.htm*"],
@@ -32,14 +42,30 @@
     {
       "matches": ["https://deimos.dgi.uanl.mx/*maincenter.htm*"],
       "js": ["src/content/center-frame.ts"],
-      "css": ["src/content/styles/center.css"],
+      "css": ["src/content/styles/center-v2.css"],
       "all_frames": true,
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/eselcarrera.htm*"],
-      "js": ["src/content/career-landing.ts"],
-      "css": ["src/content/styles/center.css"],
+      "matches": [
+        "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/eselcarrera.htm*",
+        "https://deimos.dgi.uanl.mx/cgi-bin/deya.sh/ecCargaDocto01.htm*",
+        "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/esCreditoMaterias01.htm*"
+      ],
+      "js": ["src/content/service-page.ts"],
+      "css": ["src/content/styles/service-pages-v2.css"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/ecavpag01.htm*",
+        "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/ecBolRec-v02.htm*",
+        "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/ecBolRec-v03.htm*",
+        "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/EgenbolveranoV2.htm*"
+      ],
+      "js": ["src/content/receipt-page.ts"],
+      "css": ["src/content/styles/receipt-pages-v2.css"],
       "all_frames": true,
       "run_at": "document_idle"
     },
@@ -59,17 +85,22 @@
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/ecSitEst01.htm*"
       ],
       "js": ["src/content/router.ts"],
-      "css": ["src/content/styles/center.css"],
+      "css": ["src/content/styles/center-v2.css"],
       "all_frames": true,
       "run_at": "document_idle"
     },
     {
       "matches": ["https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/CdGymins01.htm*"],
       "js": ["src/content/pages/gym-reservation-page.ts"],
-      "css": ["src/content/styles/center.css"],
+      "css": ["src/content/styles/center-v2.css"],
       "all_frames": true,
       "run_at": "document_idle"
     }
   ],
-  "web_accessible_resources": [{ "resources": ["src/content/styles/shadow.css", "icons/*.png"], "matches": ["https://deimos.dgi.uanl.mx/*"] }]
+  "web_accessible_resources": [
+    {
+      "resources": ["src/content/styles/shadow.css", "icons/*.png"],
+      "matches": ["https://deimos.dgi.uanl.mx/*"]
+    }
+  ]
 }
