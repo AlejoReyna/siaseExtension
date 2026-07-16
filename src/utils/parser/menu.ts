@@ -14,18 +14,20 @@ function inferCategory(label: string): MenuCategory {
 
 export function parseMenuItems(document: Document): MenuItem[] {
   return Array.from(
-    document.querySelectorAll<HTMLAnchorElement>('ul.menu.collapsible li a[target="center"]')
-  ).map((anchor, index) => {
-    const label = textContent(anchor);
-    return {
-      id: `${index}-${label}`,
-      label,
-      href: anchor.href,
-      target: anchor.target,
-      category: inferCategory(label),
-      pinned: false
-    };
-  });
+    document.querySelectorAll<HTMLAnchorElement>('ul.menu.collapsible li a[href]')
+  )
+    .map((anchor, index) => {
+      const label = textContent(anchor).replace(/\s+/g, ' ').trim();
+      return {
+        id: `${index}-${label}`,
+        label,
+        href: anchor.href,
+        target: anchor.target || 'center',
+        category: inferCategory(label),
+        pinned: false
+      };
+    })
+    .filter((item) => item.label && item.href);
 }
 
 export function categorizeMenuItems(items: MenuItem[]): CategorizedMenu[] {

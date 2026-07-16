@@ -1,0 +1,575 @@
+body.siase-v2-service-page {
+  min-height: 100%;
+  margin: 0 !important;
+  padding: clamp(20px, 3vw, 42px) !important;
+  color: #172033 !important;
+  background: #f5f6f8 !important;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif !important;
+}
+
+body.siase-v2-service-page,
+body.siase-v2-service-page * {
+  box-sizing: border-box;
+}
+
+body.siase-v2-service-page a {
+  color: #123b70;
+}
+
+body.siase-v2-service-page .siase-v2-service-eyebrow {
+  margin: 0 0 7px;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+body.siase-v2-service-page .siase-v2-service-title,
+body.siase-v2-service-page > center h1,
+body.siase-v2-service-page > center h2 {
+  margin: 0 auto 24px !important;
+  color: #172033 !important;
+  font-size: clamp(26px, 3vw, 38px) !important;
+  font-weight: 800 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.03em;
+}
+
+body.siase-v2-service-page select,
+body.siase-v2-service-page input[type='text'],
+body.siase-v2-service-page input[type='search'],
+body.siase-v2-service-page input[type='file'],
+body.siase-v2-service-page textarea {
+  min-height: 40px;
+  color: #172033 !important;
+  background: #fff !important;
+  border: 1px solid #cfd6e1 !important;
+  border-radius: 9px !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  font: inherit !important;
+}
+
+body.siase-v2-service-page select,
+body.siase-v2-service-page input[type='text'],
+body.siase-v2-service-page input[type='search'],
+body.siase-v2-service-page textarea {
+  padding: 8px 11px !important;
+}
+
+body.siase-v2-service-page input[type='file'] {
+  padding: 5px !important;
+}
+
+body.siase-v2-service-page input[type='file']::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 13px;
+  color: #123b70;
+  background: #eef4fb;
+  border: 0;
+  border-radius: 7px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+body.siase-v2-service-page select:focus,
+body.siase-v2-service-page input:focus,
+body.siase-v2-service-page textarea:focus {
+  border-color: #123b70 !important;
+  box-shadow: 0 0 0 3px rgba(18, 59, 112, 0.14) !important;
+  outline: 0 !important;
+}
+
+body.siase-v2-service-page input[type='button'],
+body.siase-v2-service-page input[type='submit'],
+body.siase-v2-service-page button,
+body.siase-v2-service-page .ui-button {
+  min-height: 40px;
+  padding: 9px 16px !important;
+  color: #fff !important;
+  background: #123b70 !important;
+  border: 1px solid #123b70 !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  font-weight: 750 !important;
+}
+
+body.siase-v2-service-page input[type='button']:hover,
+body.siase-v2-service-page input[type='submit']:hover,
+body.siase-v2-service-page button:hover,
+body.siase-v2-service-page .ui-button:hover {
+  background: #0d315f !important;
+}
+
+/* Career selector: additive UI; native form and controls remain in the document. */
+body.siase-v2-service-page.siase-v2-career-selector-page {
+  max-width: 1320px;
+  margin-inline: auto !important;
+}
+
+body.siase-v2-service-page .siase-v2-career-selector {
+  margin: 0 auto 22px;
+  padding: clamp(24px, 4vw, 44px);
+  overflow: hidden;
+  background: linear-gradient(135deg, #123b70 0%, #0c2d57 100%);
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(18, 59, 112, 0.18);
+}
+
+body.siase-v2-service-page .siase-v2-career-selector header {
+  max-width: 720px;
+  margin-bottom: 24px;
+}
+
+body.siase-v2-service-page .siase-v2-career-selector .siase-v2-service-eyebrow {
+  color: #e7c96f;
+}
+
+body.siase-v2-service-page .siase-v2-career-selector h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+body.siase-v2-service-page .siase-v2-career-selector header > p:last-child {
+  margin: 12px 0 0;
+  color: #dbe5f1;
+  font-size: 15px;
+}
+
+body.siase-v2-service-page .siase-v2-career-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+body.siase-v2-service-page .siase-v2-career-choice {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 13px;
+  min-height: 82px;
+  padding: 15px !important;
+  color: #172033 !important;
+  text-align: left;
+  background: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-radius: 13px !important;
+}
+
+body.siase-v2-service-page .siase-v2-career-choice:hover {
+  background: #fffaf0 !important;
+  border-color: #d6a93b !important;
+  transform: translateY(-1px);
+}
+
+body.siase-v2-service-page .siase-v2-career-choice__marker {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #123b70;
+  background: #eef4fb;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+body.siase-v2-service-page .siase-v2-career-choice strong {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+body.siase-v2-service-page .siase-v2-career-choice > span:last-child {
+  color: #8a6819;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+body.siase-v2-service-page .siase-v2-career-native-form,
+body.siase-v2-service-page .siase-v2-career-service-panel {
+  margin: 0 auto 16px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #dde2ea;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+body.siase-v2-service-page .siase-v2-career-native-form table,
+body.siase-v2-service-page .siase-v2-career-service-panel table {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+body.siase-v2-service-page .siase-v2-career-native-option {
+  display: inline-flex;
+  margin: 4px;
+  padding: 9px 12px;
+  color: #123b70 !important;
+  background: #f7f9fc;
+  border: 1px solid #dbe2ec;
+  border-radius: 9px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Carga de Documentos */
+body.siase-v2-service-page.siase-v2-document-upload-page {
+  max-width: 1240px;
+  margin-inline: auto !important;
+}
+
+body.siase-v2-service-page .siase-v2-document-fieldset,
+body.siase-v2-service-page .siase-v2-document-list,
+body.siase-v2-service-page .siase-v2-review-action,
+body.siase-v2-service-page .siase-v2-progress-track {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+body.siase-v2-service-page .siase-v2-document-fieldset {
+  margin: 0 0 18px !important;
+  padding: clamp(18px, 3vw, 30px) !important;
+  background: #fff !important;
+  border: 1px solid #dde2ea !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+body.siase-v2-service-page .siase-v2-document-fieldset table {
+  width: 100% !important;
+  border-spacing: 0 10px;
+}
+
+body.siase-v2-service-page .siase-v2-document-fieldset td:first-child {
+  width: 190px;
+  padding-right: 16px;
+  color: #475467;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+}
+
+body.siase-v2-service-page .siase-v2-document-fieldset select,
+body.siase-v2-service-page .siase-v2-document-fieldset input[type='file'] {
+  width: 100% !important;
+}
+
+body.siase-v2-service-page .siase-v2-document-list {
+  margin-top: 0 !important;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #dde2ea;
+  border-radius: 14px;
+}
+
+body.siase-v2-service-page .dataTables_wrapper {
+  width: 100% !important;
+  color: #344054 !important;
+}
+
+body.siase-v2-service-page .dataTables_wrapper .fg-toolbar,
+body.siase-v2-service-page .dataTables_wrapper .ui-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 58px;
+  padding: 10px 14px !important;
+  color: #475467 !important;
+  background: #fff !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+body.siase-v2-service-page .dataTables_wrapper .dataTables_filter input {
+  width: min(260px, 40vw);
+  margin-left: 7px;
+}
+
+body.siase-v2-service-page .dataTables_wrapper table.dataTable {
+  width: 100% !important;
+  margin: 0 !important;
+  border-collapse: collapse !important;
+  border: 0 !important;
+}
+
+body.siase-v2-service-page .dataTables_wrapper table.dataTable thead th {
+  padding: 12px 14px !important;
+  color: #fff !important;
+  background: #123b70 !important;
+  border: 0 !important;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+body.siase-v2-service-page .dataTables_wrapper table.dataTable tbody td {
+  padding: 12px 14px !important;
+  color: #344054 !important;
+  background: #fff !important;
+  border-top: 1px solid #edf0f4 !important;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+body.siase-v2-service-page .dataTables_wrapper table.dataTable tbody tr:hover td {
+  background: #f8fafc !important;
+}
+
+body.siase-v2-service-page .dataTables_wrapper .dataTables_info {
+  color: #667085;
+  font-size: 11px;
+}
+
+body.siase-v2-service-page .dataTables_wrapper .dataTables_paginate {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+body.siase-v2-service-page .dataTables_wrapper .dataTables_paginate .fg-button {
+  min-width: 34px;
+  padding: 7px 9px !important;
+  color: #123b70 !important;
+  background: #f7f9fc !important;
+  border: 1px solid #dbe2ec !important;
+  border-radius: 7px !important;
+  text-align: center;
+}
+
+body.siase-v2-service-page .dataTables_wrapper .dataTables_paginate .ui-state-disabled {
+  color: #98a2b3 !important;
+  background: #f2f4f7 !important;
+  opacity: 1 !important;
+}
+
+body.siase-v2-service-page .siase-v2-review-action {
+  display: flex;
+  justify-content: flex-end;
+  margin: 16px 0 !important;
+}
+
+body.siase-v2-service-page .siase-v2-review-button {
+  color: #172033 !important;
+  background: #d6a93b !important;
+  border-color: #d6a93b !important;
+}
+
+body.siase-v2-service-page .siase-v2-review-button:hover {
+  background: #c59a30 !important;
+}
+
+body.siase-v2-service-page .siase-v2-progress-track {
+  height: 16px !important;
+  overflow: hidden;
+  background: #e9edf2 !important;
+  border-radius: 999px !important;
+}
+
+body.siase-v2-service-page .siase-v2-native-progress {
+  min-width: 0;
+  height: 100% !important;
+  color: #172033 !important;
+  background: linear-gradient(90deg, #d6a93b, #e7c96f) !important;
+  border-radius: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* jQuery UI dialogs remain native; only their presentation changes. */
+body.siase-v2-service-page .ui-dialog {
+  overflow: hidden;
+  background: #fff !important;
+  border: 1px solid #d0d5dd !important;
+  border-radius: 14px !important;
+  box-shadow: 0 24px 70px rgba(16, 24, 40, 0.22) !important;
+}
+
+body.siase-v2-service-page .ui-dialog .ui-dialog-titlebar {
+  padding: 13px 16px !important;
+  color: #fff !important;
+  background: #123b70 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+body.siase-v2-service-page .ui-dialog .ui-dialog-content {
+  padding: 18px !important;
+  color: #344054 !important;
+  background: #fff !important;
+}
+
+body.siase-v2-service-page .ui-dialog .ui-dialog-buttonpane {
+  margin: 0 !important;
+  padding: 12px 16px !important;
+  background: #f8fafc !important;
+  border-top: 1px solid #eaecf0 !important;
+}
+
+/* Consulta de Créditos */
+body.siase-v2-service-page.siase-v2-academic-credits-page {
+  max-width: 1240px;
+  margin-inline: auto !important;
+}
+
+body.siase-v2-service-page .siase-v2-credit-container,
+body.siase-v2-service-page .siase-v2-credit-result {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+body.siase-v2-service-page .siase-v2-credit-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
+  align-items: center;
+  gap: 24px;
+  margin: 0 0 18px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #dde2ea;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+body.siase-v2-service-page .siase-v2-credit-summary strong {
+  display: block;
+  color: #172033;
+  font-size: clamp(18px, 2vw, 24px);
+  letter-spacing: -0.02em;
+}
+
+body.siase-v2-service-page .siase-v2-credit-summary div:first-child > span {
+  display: block;
+  margin-top: 5px;
+  color: #667085;
+  font-size: 12px;
+}
+
+body.siase-v2-service-page .siase-v2-credit-progress {
+  height: 12px;
+  overflow: hidden;
+  background: #e9edf2;
+  border-radius: 999px;
+}
+
+body.siase-v2-service-page .siase-v2-credit-progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #123b70 0%, #d6a93b 100%);
+  border-radius: inherit;
+}
+
+body.siase-v2-service-page .siase-v2-credit-accordion {
+  display: grid;
+  gap: 10px;
+  width: 100% !important;
+}
+
+body.siase-v2-service-page .siase-v2-credit-heading,
+body.siase-v2-service-page #accordion > h3.ui-accordion-header {
+  position: relative;
+  margin: 0 !important;
+  padding: 16px 50px 16px 18px !important;
+  color: #123b70 !important;
+  background: #fff !important;
+  border: 1px solid #dde2ea !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  font-size: 14px !important;
+  font-weight: 800 !important;
+}
+
+body.siase-v2-service-page #accordion > h3.ui-state-active {
+  color: #fff !important;
+  background: #123b70 !important;
+  border-color: #123b70 !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+body.siase-v2-service-page .siase-v2-credit-heading .ui-accordion-header-icon {
+  left: auto !important;
+  right: 18px;
+}
+
+body.siase-v2-service-page .siase-v2-credit-panel,
+body.siase-v2-service-page #accordion > .ui-accordion-content {
+  margin-top: -10px;
+  padding: 0 !important;
+  overflow-x: auto !important;
+  background: #fff !important;
+  border: 1px solid #dde2ea !important;
+  border-top: 0 !important;
+  border-radius: 0 0 12px 12px !important;
+}
+
+body.siase-v2-service-page .siase-v2-credit-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+body.siase-v2-service-page .siase-v2-credit-table th,
+body.siase-v2-service-page .siase-v2-credit-table tr:first-child td {
+  padding: 12px 14px !important;
+  color: #475467 !important;
+  background: #f8fafc !important;
+  border: 0 !important;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body.siase-v2-service-page .siase-v2-credit-table td {
+  padding: 12px 14px !important;
+  color: #344054 !important;
+  background: #fff !important;
+  border-top: 1px solid #edf0f4 !important;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  body.siase-v2-service-page {
+    padding: 16px !important;
+  }
+
+  body.siase-v2-service-page .siase-v2-document-fieldset td {
+    display: block;
+    width: 100% !important;
+    padding: 4px 0 !important;
+    text-align: left !important;
+  }
+
+  body.siase-v2-service-page .dataTables_wrapper .fg-toolbar,
+  body.siase-v2-service-page .dataTables_wrapper .ui-toolbar,
+  body.siase-v2-service-page .siase-v2-credit-summary {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  body.siase-v2-service-page .dataTables_wrapper .dataTables_filter input {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.siase-v2-service-page .siase-v2-career-choice {
+    transition: none;
+  }
+}

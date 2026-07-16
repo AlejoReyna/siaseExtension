@@ -1,0 +1,1 @@
+import{t as e}from"./center-ui-CTbDT_P4.js";import{t}from"./single-view-layout-wSICUWyl.js";async function n(n){window.name===`center`&&(t(),e(n))}n(document);
