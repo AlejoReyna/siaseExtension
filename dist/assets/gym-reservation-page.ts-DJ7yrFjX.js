@@ -1,1 +1,0 @@
-import{t as e}from"./theme-BWWqz4q9.js";function t(t){t.body.classList.add(`siase-plus-center`,`siase-plus-gym-reservation-page`),e(t)}t(document);

@@ -4,6 +4,9 @@ import type { MenuItem } from '@/types/menu';
 import type { ScheduleSlot, Weekday } from '@/types/schedule';
 import type { StudentInfo, StudentStatus } from '@/types/student';
 import { getStorageValue } from '@/utils/storage';
+import { parseStudentInfo } from '@/utils/parser/student';
+import { setStorageValue } from '@/utils/storage';
+import { refreshDashboardData } from './dashboard-data';
 
 type DashboardData = {
   studentInfo?: StudentInfo;
@@ -265,6 +268,8 @@ function createDashboard(frameDocument: Document): HTMLElement {
 }
 
 async function loadDashboardData(): Promise<DashboardData> {
+  await refreshStudentInfoFromFrames();
+  await refreshDashboardData();
   const [studentInfo, studentStatus, menuItems, schedule, grades, kardex] = await Promise.all([
     getStorageValue('studentInfo'),
     getStorageValue('studentStatus'),
@@ -281,6 +286,24 @@ async function loadDashboardData(): Promise<DashboardData> {
     grades,
     kardex
   };
+}
+
+async function refreshStudentInfoFromFrames(): Promise<void> {
+  const parentDocument = window.parent?.document;
+  const topFrame = parentDocument?.querySelector<HTMLFrameElement>('frame[name="top"]');
+  const leftFrame = parentDocument?.querySelector<HTMLFrameElement>('frame[name="left"]');
+  const topDocument = topFrame?.contentDocument;
+  if (!topDocument) return;
+  const parsed = parseStudentInfo(topDocument, leftFrame?.contentDocument ?? undefined);
+  if (!parsed.name && !parsed.matricula && !parsed.program && !parsed.plan) return;
+  const existing = await getStorageValue('studentInfo');
+  await setStorageValue('studentInfo', {
+    name: parsed.name || existing?.name || '',
+    matricula: parsed.matricula || existing?.matricula || '',
+    program: parsed.program || existing?.program,
+    faculty: parsed.faculty || existing?.faculty,
+    plan: parsed.plan || existing?.plan
+  });
 }
 
 function hydrateDashboard(shell: HTMLElement, data: DashboardData): void {

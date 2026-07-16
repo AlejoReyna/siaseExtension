@@ -1,1 +1,0 @@
-import{n as e}from"./single-view-layout-B1XuLSmm.js";function t(){document.documentElement.dataset.siasePlus=`ready`,e(),window.addEventListener(`DOMContentLoaded`,()=>{e()},{once:!0}),window.addEventListener(`load`,()=>{e()},{once:!0})}t();
