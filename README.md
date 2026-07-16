@@ -43,6 +43,17 @@ SIASE is a server-rendered OpenEdge/WebSpeed CGI application with a root `frames
 
 ## Project Updates
 
+## July 16, 2026 — Live dashboard data refresh
+
+Today’s work connected the redesigned SIASE dashboard to real authenticated portal data instead of relying only on previously cached snapshots.
+
+- Student information is refreshed from the live SIASE `top` and `left` frames.
+- Horario and calificaciones are fetched for the currently selected active period and parsed with the existing SIASE parsers.
+- Kardex data is fetched from the authenticated session and used to display credits, academic progress, and average.
+- Cached values remain available as a fallback when a live endpoint is unavailable.
+- The generated extension bundle in `dist/` was rebuilt and the changes were pushed to PR #1.
+- Validation completed successfully: 23 tests passed, TypeScript checks passed, and the production Vite build succeeded.
+
 April 27th, 2026
 During this session, I continued evolving the SIASE extension from a visual refresh into a more complete academic dashboard experience. My main goal was to make the portal feel cleaner, more modern, and more useful while preserving the original services and navigation flow from the UANL student portal.
 
