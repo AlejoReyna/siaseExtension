@@ -16,6 +16,10 @@ export function parseMenuItems(document: Document): MenuItem[] {
   return Array.from(
     document.querySelectorAll<HTMLAnchorElement>('ul.menu.collapsible li a[href]')
   )
+    .filter((anchor) => {
+      const href = anchor.getAttribute('href')?.trim().toLowerCase() ?? '';
+      return href && href !== '#' && !href.startsWith('javascript:');
+    })
     .map((anchor, index) => {
       const label = textContent(anchor).replace(/\s+/g, ' ').trim();
       return {

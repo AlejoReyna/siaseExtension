@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import {
   BookOpen,
   CalendarDays,
+  ChevronLeft,
   ChevronDown,
+  ChevronRight,
   CircleDollarSign,
   FileCheck2,
   GraduationCap,
@@ -19,8 +21,10 @@ export interface SmartSidebarProps {
   items: MenuItem[];
   query: string;
   pinnedIds: string[];
+  initialCollapsed?: boolean;
   onQueryChange: (query: string) => void;
   onTogglePinned: (id: string) => void;
+  onToggleCollapsed?: (collapsed: boolean) => void;
 }
 
 const categoryOrder: MenuCategory[] = [
@@ -45,15 +49,18 @@ export function SmartSidebar({
   items,
   query,
   pinnedIds,
+  initialCollapsed = false,
   onQueryChange,
-  onTogglePinned
+  onTogglePinned,
+  onToggleCollapsed
 }: SmartSidebarProps): JSX.Element {
   const [localQuery, setLocalQuery] = useState(query);
   const [localPinnedIds, setLocalPinnedIds] = useState(pinnedIds);
   const [activeId, setActiveId] = useState<string>();
+  const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
   const [openGroups, setOpenGroups] = useState<Record<MenuCategory, boolean>>({
-    academic: true,
-    schedule: true,
+    academic: false,
+    schedule: false,
     payments: false,
     services: false,
     profile: false,
@@ -112,6 +119,14 @@ export function SmartSidebar({
     }
   }
 
+  function toggleCollapsed(): void {
+    setIsCollapsed((current) => {
+      const next = !current;
+      onToggleCollapsed?.(next);
+      return next;
+    });
+  }
+
   function renderItem(item: MenuItem): JSX.Element {
     const pinned = localPinnedIds.includes(item.id);
     const opensNewContext = item.target === '_blank' || item.target === '_new';
@@ -141,25 +156,65 @@ export function SmartSidebar({
   }
 
   return (
-    <nav className="siase-v2-sidebar" aria-label="Servicios SIASE">
+    <nav
+      className={isCollapsed ? 'siase-v2-sidebar is-collapsed' : 'siase-v2-sidebar'}
+      aria-label="Servicios SIASE"
+    >
       <div className="siase-v2-sidebar__top">
-        <button className="siase-v2-home" type="button" onClick={handleHome}>
-          <Home size={18} aria-hidden="true" />
-          <span>Inicio</span>
-        </button>
-        <label className="siase-v2-search">
+        <div className="siase-v2-sidebar__top-row">
+          <button
+            className="siase-v2-sidebar__brand"
+            type="button"
+            aria-label="Inicio de SIASE"
+            title="Inicio de SIASE"
+            onClick={handleHome}
+          >
+            <span className="siase-v2-sidebar__brand-mark" aria-hidden="true">U</span>
+            <span className="siase-v2-sidebar__brand-name" aria-hidden="true">
+              <strong>UANL</strong>
+              <em>SIASE</em>
+            </span>
+          </button>
+          <button
+            className="siase-v2-sidebar__collapse-toggle"
+            type="button"
+            aria-expanded={!isCollapsed}
+            aria-controls="siase-v2-sidebar-content"
+            aria-label={isCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
+            title={isCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
+            onClick={toggleCollapsed}
+          >
+            {isCollapsed ? (
+              <ChevronRight size={17} aria-hidden="true" />
+            ) : (
+              <ChevronLeft size={17} aria-hidden="true" />
+            )}
+          </button>
+        </div>
+        <label className="siase-v2-search" aria-hidden={isCollapsed}>
           <Search size={16} aria-hidden="true" />
           <span className="siase-v2-sr-only">Buscar servicio</span>
           <input
             type="search"
             value={localQuery}
-            placeholder="Buscar servicio"
+            placeholder="Buscar"
+            tabIndex={isCollapsed ? -1 : undefined}
             onChange={(event) => updateQuery(event.currentTarget.value)}
           />
         </label>
       </div>
 
-      <div className="siase-v2-sidebar__scroll">
+      <div className="siase-v2-sidebar__scroll" id="siase-v2-sidebar-content">
+        <button
+          className="siase-v2-home siase-v2-home--nav"
+          type="button"
+          onClick={handleHome}
+          title="Inicio"
+        >
+          <Home size={18} aria-hidden="true" />
+          <span>Inicio</span>
+        </button>
+
         {pinnedItems.length ? (
           <section className="siase-v2-nav-group siase-v2-nav-group--favorites">
             <h2>Favoritos</h2>
@@ -170,15 +225,18 @@ export function SmartSidebar({
         {groups.map(({ category, items: groupItems }) => {
           const meta = categoryMeta[category];
           const CategoryIcon = meta.icon;
-          const isOpen = Boolean(localQuery) || openGroups[category];
+          const isOpen = Boolean(localQuery) || (!isCollapsed && openGroups[category]);
           return (
             <section className="siase-v2-nav-group" key={category}>
               <button
                 className="siase-v2-nav-group__toggle"
                 type="button"
                 aria-expanded={isOpen}
+                title={meta.label}
                 onClick={() =>
-                  setOpenGroups((current) => ({ ...current, [category]: !current[category] }))
+                  isCollapsed
+                    ? toggleCollapsed()
+                    : setOpenGroups((current) => ({ ...current, [category]: !current[category] }))
                 }
               >
                 <span>

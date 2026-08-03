@@ -1,0 +1,1 @@
+import{t as e}from"./center-ui-ChfrDVUE.js";import{t}from"./single-view-layout-BtNc9W3E.js";import{t as n}from"./enhancements-DkMg9RFN.js";async function r(r){window.name===`center`&&await n()&&(t(),e(r))}r(document);

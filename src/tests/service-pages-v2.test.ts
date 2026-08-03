@@ -5,6 +5,10 @@ import {
 } from '@/content/pages/academic-credits-page';
 import { enhanceCareerSelectorPage } from '@/content/pages/career-selector-page';
 import { enhanceDocumentUploadPage } from '@/content/pages/document-upload-page';
+import {
+  extractLegacyAnnouncements,
+  renderNotificationBell
+} from '@/content/legacy-announcements';
 import { detectServicePage, enhanceServicePage } from '@/content/service-page';
 import academicCreditsFixture from './fixtures/academic-credits.html?raw';
 import careerSelectorFixture from './fixtures/career-selector.html?raw';
@@ -53,17 +57,107 @@ describe('service page routing', () => {
 });
 
 describe('career selector enhancer', () => {
-  it('preserves the original form and delegates each new choice to its native anchor', () => {
+  it('extracts banners, official notices and quick blocks before legacy content is hidden', () => {
+    mountFixture('career-selector.html');
+    const data = extractLegacyAnnouncements(document);
+
+    expect(data.banners).toHaveLength(3);
+    expect(data.banners.map((banner) => banner.label)).toEqual([
+      'Transferencias',
+      'Transferencias',
+      'Censo Nacional sobre Inteligencia Artificial Generativa'
+    ]);
+    expect(data.banners[0]?.href).toBe('/docs/transferencias.pdf');
+    expect(data.banners[0]?.onclick).toContain('transferencias');
+    expect(data.notices).toHaveLength(2);
+    expect(data.notices[0]?.department).toBe('Departamento Escolar y de Archivo');
+    expect(data.notices[0]?.title).toBe('ENCUESTA DE SEGURIDAD SOCIAL');
+    expect(data.hasCarousel).toBe(true);
+    expect(data.previousSource?.textContent).toBe('Previous');
+    expect(data.nextSource?.textContent).toBe('Next');
+    expect(data.quickBlocks.map((block) => block.label)).toEqual(
+      expect.arrayContaining([
+        'Transferencias',
+        'Becas',
+        'Facturación UANL',
+        'Correo',
+        'Dudas',
+        'Censo Nacional sobre Inteligencia Artificial Generativa'
+      ])
+    );
+    expect(data.quickBlocks.find((block) => block.href === '/facturacion')?.href).toBe('/facturacion');
+  });
+
+  it('keeps original actions connected and provides accessible open, close and carousel behavior', () => {
+    mountFixture('career-selector.html');
+    const data = extractLegacyAnnouncements(document);
+    const originalTransfer = data.quickBlocks.find((block) => block.href === '/docs/transferencias.pdf');
+    const originalClick = vi.spyOn(originalTransfer!.source, 'click');
+    const nextClick = vi.spyOn(data.nextSource!, 'click');
+    const root = renderNotificationBell(document, data);
+    document.body.append(root);
+
+    const bell = root.querySelector<HTMLButtonElement>('.siase-v2-notification__button');
+    const panel = root.querySelector<HTMLElement>('[role="dialog"]');
+    expect(bell?.getAttribute('aria-label')).toBe('Abrir avisos de interés');
+    expect(bell?.getAttribute('aria-expanded')).toBe('false');
+    bell?.click();
+    expect(panel?.hidden).toBe(false);
+
+    const quickAction = root.querySelector<HTMLAnchorElement>(
+      '.siase-v2-notification-quick-block a[data-siase-original-href="/docs/transferencias.pdf"]'
+    );
+    quickAction?.click();
+    expect(originalClick).toHaveBeenCalledOnce();
+
+    root.querySelector<HTMLElement>('[data-siase-notification-next]')?.click();
+    expect(nextClick).toHaveBeenCalledOnce();
+    expect(root.querySelector('[data-siase-slide="1"]')).toBeTruthy();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(panel?.hidden).toBe(true);
+  });
+
+  it('renders an empty but usable bell when the legacy banner is absent', () => {
+    const parsed = new DOMParser().parseFromString(
+      '<!doctype html><html><body><form name="SelCarrera"><a href="javascript:void(0)">Carrera</a></form></body></html>',
+      'text/html'
+    );
+    document.head.innerHTML = '';
+    document.body.className = '';
+    document.body.innerHTML = parsed.body.innerHTML;
+    const data = extractLegacyAnnouncements(document);
+    expect(data.root).toBeNull();
+    expect(data.banners).toHaveLength(0);
+    expect(data.notices).toHaveLength(0);
+    expect(() => document.body.append(renderNotificationBell(document, data))).not.toThrow();
+    expect(document.querySelector('.siase-v2-notification__button')).toBeTruthy();
+  });
+
+  it('preserves the original form and submits career data without javascript URLs', () => {
+    vi.useFakeTimers();
     mountFixture('career-selector.html');
     const form = document.forms.namedItem('SelCarrera') as HTMLFormElement;
     const source = form.querySelector<HTMLAnchorElement>('a[href]') as HTMLAnchorElement;
-    const sourceClick = vi.spyOn(source, 'click').mockImplementation(() => undefined);
+    source.setAttribute(
+      'href',
+      "javascript:self.document.SelCarrera.HTMLCve_Carrera.value='01'; self.document.SelCarrera.submit()"
+    );
+    const submit = vi.spyOn(form, 'submit').mockImplementation(() => undefined);
 
     expect(enhanceCareerSelectorPage(document)).toBe(true);
     const choice = document.querySelector<HTMLButtonElement>('.siase-v2-career-choice');
+    expect(choice?.querySelector('.siase-v2-career-choice__icon')).toBeTruthy();
+    expect(choice?.querySelector('.siase-v2-career-choice__badge')?.textContent).toBe(
+      'Carrera disponible'
+    );
+    expect(document.querySelector('.siase-v2-career-profile')).toBeTruthy();
+    expect(document.querySelector('.siase-v2-career-announcement')).toBeTruthy();
     choice?.click();
+    vi.runAllTimers();
 
-    expect(sourceClick).toHaveBeenCalledOnce();
+    expect(submit).toHaveBeenCalledOnce();
+    expect(form.elements.namedItem('HTMLCve_Carrera')).toBeTruthy();
     expect(document.forms.namedItem('SelCarrera')).toBe(form);
     expect(form.action).toContain('/cgi-bin/wspd_cgi.sh/eselcarrera.htm');
     expect(form.method).toBe('post');
@@ -74,6 +168,7 @@ describe('career selector enhancer', () => {
     expect(
       document.getElementById('siase')?.classList.contains('siase-v2-career-service-panel')
     ).toBe(true);
+    vi.useRealTimers();
   });
 });
 

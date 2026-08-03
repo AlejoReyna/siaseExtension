@@ -14,16 +14,116 @@ body.siase-v2-center {
     sans-serif !important;
 }
 
+/* Native SIASE notice dialog: keep the server-rendered content and controls,
+   but bring the popup into the modern shell's visual language. */
+body.siase-v2-center #bloqueo,
+body.siase-v2-center .ui-widget-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.58) !important;
+  opacity: 1 !important;
+  z-index: 9998 !important;
+}
+
+body.siase-v2-center .ui-dialog,
+body.siase-v2-center #Mensaje,
+body.siase-v2-center #ExUn {
+  overflow: hidden !important;
+  color: #172033 !important;
+  background: #ffffff !important;
+  border: 1px solid #d7dee8 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28) !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  z-index: 9999 !important;
+}
+
+body.siase-v2-center .ui-dialog-titlebar {
+  min-height: 58px;
+  padding: 15px 58px 15px 22px !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #123b70, #0b2d57) !important;
+  border: 0 !important;
+  border-radius: 17px 17px 0 0 !important;
+  font-size: 17px !important;
+  font-weight: 850 !important;
+  line-height: 1.2;
+}
+
+body.siase-v2-center .ui-dialog-title {
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+
+body.siase-v2-center .ui-dialog-titlebar-close {
+  top: 12px !important;
+  right: 13px !important;
+  display: grid !important;
+  width: 34px !important;
+  height: 34px !important;
+  place-items: center;
+  color: #123b70 !important;
+  background: #ffc72c !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 9px !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18) !important;
+  font-size: 0 !important;
+  cursor: pointer;
+}
+
+body.siase-v2-center .ui-dialog-titlebar-close::before {
+  content: '×';
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+body.siase-v2-center .ui-dialog-content {
+  max-height: min(72vh, 760px) !important;
+  padding: 24px !important;
+  color: #344054 !important;
+  background: #ffffff !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+}
+
+body.siase-v2-center .ui-dialog-content p,
+body.siase-v2-center .ui-dialog-content li {
+  color: #344054 !important;
+}
+
+body.siase-v2-center .ui-dialog-buttonpane {
+  padding: 14px 22px 20px !important;
+  background: #ffffff !important;
+  border: 0 !important;
+}
+
+body.siase-v2-center .ui-dialog-buttonpane button {
+  min-height: 38px;
+  padding: 9px 18px !important;
+  color: #ffffff !important;
+  background: #123b70 !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  font: 800 13px/1 Inter, ui-sans-serif, system-ui, sans-serif !important;
+}
+
+body.siase-v2-center .ui-dialog-buttonpane button:hover {
+  background: #0d315f !important;
+}
+
 body.siase-v2-center,
 body.siase-v2-center * {
   box-sizing: border-box;
 }
 
 #siase-v2-dashboard {
-  width: min(100%, 1360px);
+  width: 100%;
   min-height: 100vh;
   margin: 0 auto;
-  padding: 28px clamp(20px, 3vw, 46px) 48px;
+  padding: 44px clamp(28px, 3vw, 52px) 52px;
 }
 
 .siase-v2-welcome {
@@ -32,6 +132,30 @@ body.siase-v2-center * {
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 24px;
+}
+
+.siase-v2-layout-debug-toggle {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  color: #991b1b;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.siase-v2-layout-debug-toggle:hover,
+.siase-v2-layout-debug-toggle[aria-pressed='true'] {
+  color: #ffffff;
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+#siase-v2-dashboard.siase-v2-layout-debug div[data-siase-v2-debug-depth] {
+  outline: 2px solid var(--siase-v2-debug-outline);
+  outline-offset: -2px;
 }
 
 .siase-v2-eyebrow {
@@ -85,7 +209,7 @@ body.siase-v2-center * {
 .siase-v2-dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
-  gap: 18px;
+  gap: 26px;
 }
 
 .siase-v2-card,
@@ -99,7 +223,171 @@ body.siase-v2-center * {
 }
 
 .siase-v2-card {
-  padding: 20px;
+  padding: 28px;
+}
+
+.siase-v2-card--nexus {
+  min-height: 250px;
+}
+
+.siase-v2-card--nexus > header > strong {
+  color: #123b70;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.siase-nexus-widget {
+  min-width: 0;
+}
+
+.siase-nexus-widget > .siase-career-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.siase-nexus-widget__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.siase-nexus-widget__title h2,
+.siase-nexus-widget > .siase-career-section__header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 18px;
+  letter-spacing: -0.025em;
+}
+
+.siase-nexus-widget > .siase-career-section__header > span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.siase-nexus-widget__icon {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: #123b70;
+  background: #edf4fc;
+  border-radius: 10px;
+}
+
+.siase-nexus-widget__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.siase-nexus-widget__group {
+  display: grid;
+  gap: 7px;
+}
+
+.siase-nexus-widget__group--week {
+  margin-top: 12px;
+}
+
+.siase-nexus-widget__group .siase-dashboard__eyebrow {
+  margin: 0 0 3px;
+  color: #667085;
+}
+
+.siase-nexus-widget__item {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #f8f9fb;
+  border: 1px solid #e7eaf0;
+  border-radius: 10px;
+}
+
+.siase-nexus-widget__item--urgente {
+  background: #fff8ed;
+  border-color: #fedf89;
+}
+
+.siase-nexus-widget__item-header,
+.siase-nexus-widget__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.siase-nexus-widget__materia {
+  overflow: hidden;
+  color: #123b70;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.siase-nexus-widget__badge {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  color: #123b70;
+  background: #edf4fc;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.siase-nexus-widget__badge--urgente {
+  color: #a15c00;
+  background: #fffaeb;
+}
+
+.siase-nexus-widget__titulo {
+  overflow: hidden;
+  color: #172033;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.siase-nexus-widget__meta {
+  color: #667085;
+  font-size: 10px;
+}
+
+.siase-nexus-widget__add-cal {
+  display: none;
+}
+
+.siase-nexus-widget__empty {
+  padding: 13px;
+  color: #667085;
+  background: #f8f9fb;
+  border-radius: 10px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.siase-nexus-widget__skeleton {
+  display: grid;
+  gap: 8px;
+}
+
+.siase-nexus-widget__skeleton-item {
+  height: 58px;
+  background: linear-gradient(90deg, #f8f9fb 25%, #edf1f5 50%, #f8f9fb 75%);
+  background-size: 200% 100%;
+  border-radius: 10px;
+  animation: siase-v2-nexus-shimmer 1.4s infinite;
+}
+
+@keyframes siase-v2-nexus-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .siase-v2-card > header,
@@ -291,60 +579,842 @@ body.siase-v2-center * {
 }
 
 .siase-v2-quick-section {
-  margin-top: 18px;
-  padding: 20px;
+  margin: 0 0 26px;
+  padding: 24px 28px 28px;
 }
 
 .siase-v2-quick-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .siase-v2-action {
   position: relative;
   display: grid;
   min-width: 0;
-  min-height: 112px;
-  padding: 15px 38px 15px 15px;
-  color: #172033;
-  background: #f8f9fb;
-  border: 1px solid #e7eaf0;
-  border-radius: 11px;
+  min-height: 142px;
+  padding: 18px 42px 18px 58px;
+  color: #1f2328;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(31, 35, 40, 0.04);
   text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.siase-v2-action::before {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  color: #0969da;
+  background: #ddf4ff;
+  border: 1px solid #b6e3ff;
+  border-radius: 50%;
+  content: '↗';
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .siase-v2-action:hover {
-  background: #f1f6fc;
-  border-color: #b8cce4;
+  background: #f6f8fa;
+  border-color: #0969da;
+  box-shadow: 0 4px 12px rgba(31, 35, 40, 0.12);
+  transform: translateY(-2px);
+}
+
+.siase-v2-action:focus-visible {
+  outline: 3px solid rgba(9, 105, 218, 0.35);
+  outline-offset: 2px;
 }
 
 .siase-v2-action strong {
   overflow: hidden;
-  font-size: 13px;
+  color: #0969da;
+  font-size: 15px;
+  font-weight: 750;
   line-height: 1.35;
   text-overflow: ellipsis;
 }
 
 .siase-v2-action span {
   align-self: end;
-  margin-top: 12px;
-  color: #667085;
-  font-size: 11px;
+  margin-top: 14px;
+  color: #57606a;
+  font-size: 12px;
   line-height: 1.35;
 }
 
 .siase-v2-action em {
   position: absolute;
-  top: 14px;
-  right: 15px;
-  color: #123b70;
+  right: 18px;
+  bottom: 18px;
+  color: #0969da;
   font-style: normal;
   font-weight: 900;
 }
 
+.siase-v2-quick-section__hint {
+  padding: 5px 8px;
+  color: #1a7f37;
+  background: #dafbe1;
+  border: 1px solid #aceebb;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+/* Selected-career main view: profile rail + subnavigation + GitHub-like metric grid. */
+#siase-v2-dashboard.siase-v2-profile-dashboard {
+  min-height: 100vh;
+  padding: 0 0 40px;
+  color: #1f2328;
+  background: #f6f8fa;
+}
+
+.siase-v2-profile-nav {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 24px;
+  overflow-x: auto;
+  background: #ffffff;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.siase-v2-profile-nav > div {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.siase-v2-profile-nav__item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 55px;
+  padding: 10px 12px;
+  color: #424a53;
+  background: transparent;
+  border: 0;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.siase-v2-profile-nav__item:hover {
+  color: #0b2f58;
+  background: #f6f8fa;
+}
+
+.siase-v2-profile-nav__item.is-active {
+  color: #0b2f58;
+  font-weight: 750;
+}
+
+.siase-v2-profile-nav__item.is-active::after {
+  position: absolute;
+  right: 7px;
+  bottom: 0;
+  left: 7px;
+  height: 2px;
+  background: #123b70;
+  content: '';
+}
+
+.siase-v2-profile-nav__item[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.52;
+}
+
+.siase-v2-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.siase-v2-profile-card {
+  align-self: stretch;
+  min-width: 0;
+  min-height: calc(100vh - 56px);
+  padding: 28px 24px 32px;
+  background: #eef1f4;
+  border-right: 1px solid #d8dee4;
+}
+
+.siase-v2-profile-photo {
+  position: relative;
+  width: min(100%, 252px);
+  aspect-ratio: 1;
+  margin: 0 auto 8px;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.siase-v2-profile-avatar {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
+  margin: 0;
+  place-items: center;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 68% 28%, rgba(255, 255, 255, 0.22), transparent 24%),
+    linear-gradient(145deg, #1d4f82, #082b50);
+  border: 1px solid #d0d7de;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.08);
+  font-size: clamp(48px, 7vw, 78px);
+  font-weight: 850;
+  letter-spacing: -0.06em;
+}
+
+.siase-v2-profile-avatar.has-photo {
+  background-color: #eef1f4;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  box-shadow: none;
+}
+
+.siase-v2-profile-photo__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: rgb(0 0 0 / 58%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.siase-v2-profile-photo:hover .siase-v2-profile-photo__overlay,
+.siase-v2-profile-photo:focus-within .siase-v2-profile-photo__overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.siase-v2-profile-photo:focus-visible {
+  outline: 3px solid rgba(9, 105, 218, 0.32);
+  outline-offset: 3px;
+}
+
+.siase-v2-profile-photo__overlay button {
+  min-height: 29px;
+  padding: 5px 10px;
+  color: #ffffff;
+  background: rgb(13 17 23 / 72%);
+  border: 1px solid rgb(255 255 255 / 58%);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.siase-v2-profile-photo__overlay button:hover {
+  background: rgb(13 17 23 / 92%);
+  border-color: #ffffff;
+}
+
+.siase-v2-profile-photo__overlay button:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 2px;
+}
+
+.siase-v2-profile-photo__status {
+  min-height: 16px;
+  margin: 4px 0 0 !important;
+  color: #57606a !important;
+  font-size: 9px !important;
+  text-align: center;
+}
+
+.siase-v2-profile-card h1 {
+  margin: 0;
+  color: #1f2328;
+  font-size: 24px;
+  line-height: 1.18;
+  text-align: center;
+}
+
+.siase-v2-profile-program {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  color: #344054;
+  background: #ffffff;
+  border: 1px solid #d8dee4;
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgb(31 35 40 / 4%);
+  text-align: center;
+}
+
+.siase-v2-profile-program > span {
+  color: #667085;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.siase-v2-profile-program > strong {
+  color: #1f2328;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.siase-v2-profile-meta {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.siase-v2-profile-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 14px;
+  background: rgb(255 255 255 / 78%);
+  border: 1px solid #d8dee4;
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgb(31 35 40 / 4%);
+}
+
+.siase-v2-profile-row[hidden] {
+  display: none;
+}
+
+.siase-v2-profile-row > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.siase-v2-profile-row > div > span {
+  color: #57606a;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.siase-v2-profile-row strong {
+  color: #1f2328;
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.siase-v2-profile-plan-progress {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  min-height: 70px;
+  padding: 13px 14px;
+  align-items: start;
+  justify-items: start;
+  background: rgb(255 255 255 / 78%);
+  border: 1px solid #d8dee4;
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgb(31 35 40 / 4%);
+  text-align: left;
+}
+
+.siase-v2-profile-plan-progress > strong {
+  width: 100%;
+  color: #57606a;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.siase-v2-profile-plan-progress__track {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  background: #d8dee4;
+  border-radius: 999px;
+}
+
+.siase-v2-profile-plan-progress__track > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #123b70;
+  border-radius: inherit;
+  transition: width 500ms ease;
+}
+
+.siase-v2-profile-raw-help {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.siase-v2-profile-raw-help button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  place-items: center;
+  color: #57606a;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 50%;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1;
+  cursor: help;
+}
+
+.siase-v2-profile-raw-help [role='tooltip'] {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 30;
+  width: min(320px, 75vw);
+  padding: 10px 12px;
+  color: #ffffff;
+  background: #24292f;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(31, 35, 40, 0.24);
+  font: 500 10px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(3px);
+  visibility: hidden;
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    visibility 140ms ease;
+}
+
+.siase-v2-profile-raw-help:hover [role='tooltip'],
+.siase-v2-profile-raw-help:focus-within [role='tooltip'] {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.siase-v2-profile-raw-help button:focus-visible {
+  outline: 3px solid rgba(9, 105, 218, 0.32);
+  outline-offset: 2px;
+}
+
+.siase-v2-profile-content {
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+  padding: 28px 20px 0 24px;
+}
+
+[data-siase-v2-profile-summary] {
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+}
+
+.siase-v2-inline-service {
+  min-width: 0;
+}
+
+.siase-v2-inline-service__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.siase-v2-inline-service__toolbar h1 {
+  margin: 0;
+  color: #172033;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 800;
+}
+
+.siase-v2-inline-service__back {
+  min-height: 36px;
+  padding: 8px 12px;
+  color: #123b70;
+  background: #eef4fb;
+  border: 1px solid #d5e2f0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.siase-v2-inline-service__back:hover,
+.siase-v2-inline-service__back:focus-visible {
+  background: #dceafa;
+}
+
+.siase-v2-inline-service__frame {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 130px);
+  border: 1px solid #d0d7de;
+  border-radius: 12px;
+  background: #f5f6f8;
+}
+
+.siase-v2-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.siase-v2-dashboard-sections {
+  display: grid;
+  gap: 28px;
+}
+
+.siase-v2-profile-section {
+  position: relative;
+  min-width: 0;
+}
+
+.siase-v2-profile-section > h2,
+.siase-v2-profile-section__header h2,
+.siase-v2-dashboard-section__header h2 {
+  margin: 0 0 12px;
+  color: #1f2328;
+  font-size: 14px;
+  font-weight: 520;
+}
+
+.siase-v2-dashboard-section__header {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.siase-v2-dashboard-section__drag-handle,
+.siase-v2-dashboard-section__move-actions button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  place-items: center;
+  color: #57606a;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.siase-v2-dashboard-section__drag-handle {
+  cursor: grab;
+}
+
+.siase-v2-dashboard-section__drag-handle:active {
+  cursor: grabbing;
+}
+
+.siase-v2-dashboard-section__drag-handle:hover,
+.siase-v2-dashboard-section__drag-handle:focus-visible,
+.siase-v2-dashboard-section__move-actions button:hover,
+.siase-v2-dashboard-section__move-actions button:focus-visible {
+  color: #0b2f58;
+  background: #eef4fb;
+  border-color: #b6cce5;
+  outline: none;
+}
+
+.siase-v2-dashboard-section__move-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.siase-v2-dashboard-section__header:focus-within .siase-v2-dashboard-section__move-actions,
+.siase-v2-dashboard-section__header:hover .siase-v2-dashboard-section__move-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.siase-v2-dashboard-section.is-dragging {
+  opacity: 0.48;
+}
+
+.siase-v2-dashboard-section.is-keyboard-reordering {
+  outline: 2px solid #0969da;
+  outline-offset: 6px;
+}
+
+.siase-v2-dashboard-section.is-drop-before::before,
+.siase-v2-dashboard-section.is-drop-after::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: #0969da;
+  border-radius: 999px;
+  content: '';
+}
+
+.siase-v2-dashboard-section.is-drop-before::before {
+  top: -15px;
+}
+
+.siase-v2-dashboard-section.is-drop-after::after {
+  bottom: -15px;
+}
+
+.siase-v2-profile-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.siase-v2-profile-section__header > span {
+  color: #57606a;
+  font-size: 10px;
+}
+
+.siase-v2-profile-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.siase-v2-profile-metrics article {
+  display: grid;
+  min-height: 112px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(31, 35, 40, 0.04);
+}
+
+.siase-v2-profile-metrics article:hover {
+  border-color: #8c959f;
+  box-shadow: 0 3px 8px rgba(31, 35, 40, 0.08);
+}
+
+.siase-v2-profile-metrics header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.siase-v2-profile-metrics header > span {
+  color: #57606a;
+  font-size: 13px;
+}
+
+.siase-v2-profile-metrics h3 {
+  margin: 0;
+  color: #0b2f58;
+  font-size: 14px;
+}
+
+.siase-v2-profile-metrics p {
+  margin: 9px 0 12px;
+  color: #424a53;
+  font-size: 13px;
+}
+
+.siase-v2-profile-metric-value {
+  align-self: end;
+  color: #424a53;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.siase-v2-profile-metric-value::before {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  vertical-align: -1px;
+  background: #8c959f;
+  border-radius: 50%;
+  content: '';
+}
+
+.siase-v2-profile-metric-value--gold::before {
+  background: #9a7400;
+}
+
+.siase-v2-profile-metric-value--blue::before {
+  background: #082f57;
+}
+
+.siase-v2-profile-metric-value--yellow::before {
+  background: #f5b942;
+}
+
+.siase-v2-profile-metric-value--lightblue::before {
+  background: #9ec5f8;
+}
+
+.siase-v2-profile-table,
+.siase-v2-profile-events {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+}
+
+.siase-v2-profile-table > header {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  color: #424a53;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+  font-size: 11px;
+}
+
+.siase-v2-profile-table > header em {
+  font-style: normal;
+}
+
+.siase-v2-profile-grade {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 100px 44px;
+  align-items: center;
+  gap: 6px;
+  min-height: 37px;
+  padding: 0 14px;
+  color: #0b2f58;
+  border-top: 1px solid #d8dee4;
+  font-size: 12px;
+}
+
+.siase-v2-profile-grade:first-child {
+  border-top: 0;
+}
+
+.siase-v2-profile-grade > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.siase-v2-profile-grade > span:first-child,
+.siase-v2-profile-grade em {
+  color: #57606a;
+}
+
+.siase-v2-profile-grade em {
+  overflow: hidden;
+  font-size: 10px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.siase-v2-profile-grade strong {
+  color: #1f2328;
+  text-align: right;
+}
+
+.siase-v2-profile-grade strong[data-status='failed'] {
+  color: #cf222e;
+}
+
+.siase-v2-profile-event {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 64px;
+  padding: 8px 14px;
+  border-top: 1px solid #d8dee4;
+}
+
+.siase-v2-profile-event:first-child {
+  border-top: 0;
+}
+
+.siase-v2-profile-event time {
+  display: grid;
+  color: #0b2f58;
+  text-align: center;
+}
+
+.siase-v2-profile-event time strong {
+  font-size: 13px;
+}
+
+.siase-v2-profile-event time span {
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.siase-v2-profile-event > span {
+  display: grid;
+  gap: 3px;
+}
+
+.siase-v2-profile-event > span strong {
+  overflow: hidden;
+  color: #1f2328;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.siase-v2-profile-event > span em {
+  color: #57606a;
+  font-size: 10px;
+  font-style: normal;
+}
+
+.siase-v2-profile-empty {
+  margin: 0;
+  padding: 20px;
+  color: #57606a;
+  font-size: 12px;
+  text-align: center;
+}
+
 .siase-v2-native-notices {
-  margin-top: 18px;
+  margin-top: 0;
   padding: 0 20px 20px;
 }
 
@@ -533,27 +1603,75 @@ body.siase-v2-kardex-page .siase-v2-kardex-print:hover {
 }
 
 body.siase-v2-kardex-page .siase-v2-kardex-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+  gap: 18px;
   margin: 0 0 18px;
+}
+
+body.siase-v2-kardex-page .siase-v2-kardex-student,
+body.siase-v2-kardex-page .siase-v2-kardex-stats {
+  min-width: 0;
+  border-radius: 16px;
+}
+
+body.siase-v2-kardex-page .siase-v2-kardex-student {
+  display: flex;
+  min-height: 240px;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(24px, 3vw, 38px);
+  background: #ffffff;
+  border: 1px solid #dde2ea;
+  box-shadow: 0 10px 26px rgba(16, 24, 40, 0.06);
+}
+
+body.siase-v2-kardex-page .siase-v2-kardex-student .siase-v2-eyebrow {
+  color: #8a6819;
+}
+
+body.siase-v2-kardex-page .siase-v2-kardex-student h2 {
+  margin: 0 0 18px;
+  color: #172033;
+  font-size: clamp(23px, 3vw, 34px);
+  letter-spacing: -0.04em;
+}
+
+body.siase-v2-kardex-page .siase-v2-kardex-student__copy {
+  padding: 16px 18px;
+  color: #344054;
+  background: #f3f6fa;
+  border-left: 4px solid #d6a93b;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+body.siase-v2-kardex-page .siase-v2-kardex-native-header--relocated {
+  display: none !important;
+}
+
+body.siase-v2-kardex-page .siase-v2-kardex-stats {
   padding: clamp(20px, 3vw, 30px);
   color: #fff;
   background: linear-gradient(135deg, #123b70 0%, #0c2d57 100%);
-  border-radius: 16px;
   box-shadow: 0 16px 36px rgba(18, 59, 112, 0.18);
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-summary > header {
+body.siase-v2-kardex-page .siase-v2-kardex-stats > header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.58fr);
+  grid-template-columns: 1fr;
   gap: 24px;
   align-items: end;
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-summary .siase-v2-eyebrow {
+body.siase-v2-kardex-page .siase-v2-kardex-stats .siase-v2-eyebrow {
   margin-bottom: 7px;
   color: #e7c96f;
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-summary h1 {
+body.siase-v2-kardex-page .siase-v2-kardex-stats h1 {
   margin: 0;
   color: #fff;
   font-size: clamp(30px, 4vw, 42px);
@@ -561,7 +1679,7 @@ body.siase-v2-kardex-page .siase-v2-kardex-summary h1 {
   letter-spacing: -0.04em;
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-summary header > div:first-child > p:last-child {
+body.siase-v2-kardex-page .siase-v2-kardex-stats header > div:first-child > p:last-child {
   max-width: 620px;
   margin: 10px 0 0;
   color: #dbe5f1;
@@ -569,7 +1687,7 @@ body.siase-v2-kardex-page .siase-v2-kardex-summary header > div:first-child > p:
   line-height: 1.5;
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-summary__progress > span {
+body.siase-v2-kardex-page .siase-v2-kardex-stats .siase-v2-kardex-summary__progress > span {
   display: block;
   margin-bottom: 8px;
   color: #f8ecd0;
@@ -593,14 +1711,14 @@ body.siase-v2-kardex-page .siase-v2-kardex-progress > span {
   transition: width 500ms ease;
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-metrics {
+body.siase-v2-kardex-page .siase-v2-kardex-stats .siase-v2-kardex-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 24px 0 0;
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-metrics > div {
+body.siase-v2-kardex-page .siase-v2-kardex-stats .siase-v2-kardex-metrics > div {
   min-width: 0;
   padding: 12px;
   background: rgba(255, 255, 255, 0.1);
@@ -608,7 +1726,7 @@ body.siase-v2-kardex-page .siase-v2-kardex-metrics > div {
   border-radius: 10px;
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-metrics dt {
+body.siase-v2-kardex-page .siase-v2-kardex-stats .siase-v2-kardex-metrics dt {
   margin-bottom: 6px;
   color: #dbe5f1;
   font-size: 10px;
@@ -617,7 +1735,7 @@ body.siase-v2-kardex-page .siase-v2-kardex-metrics dt {
   text-transform: uppercase;
 }
 
-body.siase-v2-kardex-page .siase-v2-kardex-metrics dd {
+body.siase-v2-kardex-page .siase-v2-kardex-stats .siase-v2-kardex-metrics dd {
   margin: 0;
   overflow: hidden;
   color: #fff;
@@ -711,8 +1829,12 @@ body.siase-v2-kardex-page .siase-v2-kardex-table .siase-v2-score--pending {
     padding: 16px !important;
   }
 
-  body.siase-v2-kardex-page .siase-v2-kardex-summary > header,
-  body.siase-v2-kardex-page .siase-v2-kardex-metrics {
+  body.siase-v2-kardex-page .siase-v2-kardex-summary {
+    grid-template-columns: 1fr;
+  }
+
+  body.siase-v2-kardex-page .siase-v2-kardex-stats > header,
+  body.siase-v2-kardex-page .siase-v2-kardex-stats .siase-v2-kardex-metrics {
     grid-template-columns: 1fr;
   }
 
@@ -722,6 +1844,22 @@ body.siase-v2-kardex-page .siase-v2-kardex-table .siase-v2-score--pending {
 }
 
 @media (max-width: 1050px) {
+  .siase-v2-profile-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .siase-v2-profile-card {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #d8dee4;
+  }
+
+  .siase-v2-profile-content {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
   .siase-v2-dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -740,6 +1878,89 @@ body.siase-v2-kardex-page .siase-v2-kardex-table .siase-v2-score--pending {
     display: grid;
   }
 
+  .siase-v2-profile-nav {
+    padding-inline: 10px;
+  }
+
+  .siase-v2-profile-layout {
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+
+  .siase-v2-profile-card {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    column-gap: 16px;
+    align-items: center;
+    min-height: auto;
+    padding: 20px 16px;
+    border-right: 0;
+    border-bottom: 1px solid #d8dee4;
+  }
+
+  .siase-v2-profile-photo {
+    grid-row: 1 / span 3;
+    width: 88px;
+    margin: 0;
+  }
+
+  .siase-v2-profile-avatar {
+    width: 100%;
+    margin: 0;
+    font-size: 30px;
+  }
+
+  .siase-v2-profile-card h1 {
+    font-size: 19px;
+  }
+
+  .siase-v2-profile-program {
+    grid-column: 2;
+    margin-top: 4px;
+    padding: 10px 12px;
+  }
+
+  .siase-v2-profile-program > strong {
+    font-size: 14px;
+  }
+
+  .siase-v2-profile-photo__overlay {
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px;
+  }
+
+  .siase-v2-profile-photo__overlay button {
+    min-height: 22px;
+    padding: 2px 5px;
+    font-size: 8px;
+  }
+
+  .siase-v2-profile-photo__status {
+    grid-row: 4;
+    grid-column: 1;
+  }
+
+  .siase-v2-profile-content {
+    padding: 20px 0 0;
+  }
+
+  .siase-v2-profile-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .siase-v2-profile-grade {
+    grid-template-columns: 18px minmax(0, 1fr) 40px;
+  }
+
+  .siase-v2-profile-grade em {
+    display: none;
+  }
+
+  .siase-v2-layout-debug-toggle {
+    justify-self: start;
+  }
+
   .siase-v2-session-state {
     justify-self: start;
   }
@@ -754,5 +1975,273 @@ body.siase-v2-kardex-page .siase-v2-kardex-table .siase-v2-score--pending {
   .siase-v2-progress span,
   .siase-v2-kardex-progress span {
     transition: none;
+  }
+
+  .siase-v2-dashboard-section__move-actions {
+    transition: none;
+  }
+
+  .siase-v2-profile-photo__overlay {
+    transition: none;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .siase-v2-dashboard-section__move-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Live SIASE schedule result: the native tables remain the data source, but
+   the page gets a calmer reading surface and a period switcher above it. */
+body.siase-v2-schedule-auto-loading {
+  min-height: 100%;
+  padding: 32px !important;
+  background: #f4f7fb !important;
+}
+
+body.siase-v2-schedule-auto-loading > * {
+  visibility: hidden;
+}
+
+body.siase-v2-schedule-page {
+  min-height: 100%;
+  margin: 0 !important;
+  padding: clamp(18px, 3vw, 36px) !important;
+  color: #162235 !important;
+  background: #f4f7fb !important;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif !important;
+}
+
+body.siase-v2-schedule-page,
+body.siase-v2-schedule-page * {
+  box-sizing: border-box;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.7fr) minmax(260px, 1.4fr) auto;
+  align-items: end;
+  gap: 14px 20px;
+  width: min(100%, 1180px);
+  margin: 0 auto 16px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #dbe3ed;
+  border-radius: 13px;
+  box-shadow: 0 8px 24px rgba(34, 56, 84, 0.07);
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period__copy {
+  display: grid;
+  gap: 3px;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period__eyebrow {
+  margin: 0;
+  color: #66809d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period__copy label {
+  color: #172b45;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period__form {
+  min-width: 0;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period__form input[type='hidden'] {
+  display: none !important;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period__select {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 11px;
+  color: #172033;
+  background: #fff;
+  border: 1px solid #c6d2df;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period__select:focus {
+  border-color: #2364a5;
+  box-shadow: 0 0 0 3px rgba(35, 100, 165, 0.14);
+  outline: 0;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-period__hint {
+  align-self: center;
+  color: #718096;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-surface {
+  width: min(100%, 1180px);
+  margin: 0 auto !important;
+  padding: clamp(18px, 3vw, 30px) !important;
+  overflow: hidden;
+  color: #172033 !important;
+  background: #fff !important;
+  border: 1px solid #dbe3ed;
+  border-radius: 16px;
+  box-shadow: 0 14px 38px rgba(34, 56, 84, 0.08) !important;
+  text-align: left !important;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-surface > div:first-child {
+  max-width: 760px;
+  margin-bottom: 12px;
+  color: #69798c;
+  font-size: 11px;
+  line-height: 1.65;
+  text-align: left;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-surface h6 {
+  margin: 24px 0 10px;
+  color: #172b45 !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
+  text-align: left;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-surface h6:first-of-type {
+  margin-top: 10px;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0 0 8px;
+  text-align: right;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-actions .boton {
+  min-height: 34px;
+  margin: 0 !important;
+  padding: 7px 12px !important;
+  color: #24527d !important;
+  background: #eef5fb !important;
+  border: 1px solid #cbdbea !important;
+  border-radius: 7px !important;
+  font-size: 12px !important;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-grid {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #dfe7ef;
+  border-radius: 11px;
+  font-size: 12px;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-grid th {
+  padding: 11px 8px;
+  color: #38516c;
+  background: #edf4fa;
+  border-bottom: 1px solid #d8e2ec;
+  font-weight: 800;
+  text-align: center;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-grid td {
+  min-width: 100px;
+  min-height: 64px;
+  padding: 10px 8px !important;
+  color: #34495e;
+  background: #fff !important;
+  border-bottom: 1px solid #e8eef4;
+  border-right: 1px solid #e8eef4;
+  line-height: 1.45;
+  text-align: center;
+  vertical-align: middle;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-grid tr:last-child td {
+  border-bottom: 0;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-grid td:last-child,
+body.siase-v2-schedule-page .siase-v2-schedule-grid th:last-child {
+  border-right: 0;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-grid td:first-child {
+  min-width: 122px;
+  color: #6a5220;
+  background: #fff8e1 !important;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-grid td:not(:first-child) b {
+  color: #1f6295;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-catalog,
+body.siase-v2-schedule-page .siase-v2-schedule-reference {
+  width: 100%;
+  border-collapse: collapse;
+  color: #4b5d70;
+  font-size: 11px;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-catalog th,
+body.siase-v2-schedule-page .siase-v2-schedule-reference th {
+  color: #425a73;
+  background: #f4f7fa;
+  font-weight: 800;
+}
+
+body.siase-v2-schedule-page .siase-v2-schedule-catalog th,
+body.siase-v2-schedule-page .siase-v2-schedule-catalog td,
+body.siase-v2-schedule-page .siase-v2-schedule-reference th,
+body.siase-v2-schedule-page .siase-v2-schedule-reference td {
+  padding: 8px 7px !important;
+  border: 1px solid #e2e9f0;
+}
+
+@media (max-width: 720px) {
+  body.siase-v2-schedule-page .siase-v2-schedule-period {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  body.siase-v2-schedule-page .siase-v2-schedule-period__hint {
+    margin-top: -5px;
+  }
+
+  body.siase-v2-schedule-page .siase-v2-schedule-surface {
+    padding: 14px !important;
+  }
+
+  body.siase-v2-schedule-page .siase-v2-schedule-grid {
+    display: block;
+    min-width: 760px;
+    overflow-x: auto;
+    white-space: normal;
   }
 }

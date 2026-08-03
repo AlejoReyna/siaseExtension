@@ -74,11 +74,30 @@ function addSummary(
   if (existing) return;
 
   const passedSubjects = summary.entries.filter((entry) => entry.passed).length;
-  const progress = Math.min(100, Math.max(0, summary.progressPercent));
+  const progress =
+    summary.progressPercent === undefined
+      ? undefined
+      : Math.min(100, Math.max(0, summary.progressPercent));
+  const hasCreditTotals =
+    summary.approvedCredits !== undefined && summary.totalCredits !== undefined;
   const section = frameDocument.createElement('section');
   section.className = 'siase-v2-kardex-summary';
   section.dataset.siaseV2KardexSummary = 'true';
   section.setAttribute('aria-label', 'Resumen de Kardex');
+
+  const studentCard = frameDocument.createElement('article');
+  studentCard.className = 'siase-v2-kardex-student';
+  const studentEyebrow = frameDocument.createElement('p');
+  studentEyebrow.className = 'siase-v2-eyebrow';
+  studentEyebrow.textContent = 'Información del alumno';
+  const studentTitle = frameDocument.createElement('h2');
+  studentTitle.textContent = 'Datos académicos';
+  const studentCopy = frameDocument.createElement('div');
+  studentCopy.className = 'siase-v2-kardex-student__copy';
+  const nativeHeader = frameDocument.getElementById('noof');
+  studentCopy.textContent = nativeHeader?.textContent?.replace(/\s+/g, ' ').trim() || 'Información del alumno';
+  studentCard.append(studentEyebrow, studentTitle, studentCopy);
+  nativeHeader?.classList.add('siase-v2-kardex-native-header--relocated');
 
   const header = frameDocument.createElement('header');
   const copy = frameDocument.createElement('div');
@@ -94,19 +113,23 @@ function addSummary(
   const progressBlock = frameDocument.createElement('div');
   progressBlock.className = 'siase-v2-kardex-summary__progress';
   const progressLabel = frameDocument.createElement('span');
-  progressLabel.textContent = `${summary.totalCreditsCompleted} de ${summary.totalCreditsRequired} créditos`;
+  progressLabel.textContent = hasCreditTotals
+    ? `${summary.approvedCredits} de ${summary.totalCredits} créditos`
+    : 'Progreso por sincronizar';
   const track = frameDocument.createElement('div');
   track.className = 'siase-v2-kardex-progress';
-  track.setAttribute('role', 'progressbar');
-  track.setAttribute(
-    'aria-label',
-    `Avance de créditos: ${summary.totalCreditsCompleted} de ${summary.totalCreditsRequired}`
-  );
-  track.setAttribute('aria-valuemin', '0');
-  track.setAttribute('aria-valuemax', String(summary.totalCreditsRequired));
-  track.setAttribute('aria-valuenow', String(summary.totalCreditsCompleted));
+  if (hasCreditTotals) {
+    track.setAttribute('role', 'progressbar');
+    track.setAttribute(
+      'aria-label',
+      `Avance de créditos: ${summary.approvedCredits} de ${summary.totalCredits}`
+    );
+    track.setAttribute('aria-valuemin', '0');
+    track.setAttribute('aria-valuemax', String(summary.totalCredits));
+    track.setAttribute('aria-valuenow', String(summary.approvedCredits));
+  }
   const fill = frameDocument.createElement('span');
-  fill.style.width = `${progress}%`;
+  fill.style.width = progress === undefined ? '0%' : `${progress}%`;
   track.append(fill);
   progressBlock.append(progressLabel, track);
   header.append(copy, progressBlock);
@@ -114,7 +137,10 @@ function addSummary(
   const metrics = frameDocument.createElement('dl');
   metrics.className = 'siase-v2-kardex-metrics';
   const values = [
-    ['Créditos aprobados', `${summary.totalCreditsCompleted} / ${summary.totalCreditsRequired}`],
+    [
+      'Créditos aprobados',
+      hasCreditTotals ? `${summary.approvedCredits} / ${summary.totalCredits}` : 'No disponible'
+    ],
     ['Materias aprobadas', String(passedSubjects)],
     ['Promedio', summary.average === undefined ? 'No disponible' : summary.average.toFixed(2)]
   ];
@@ -128,7 +154,10 @@ function addSummary(
     metrics.append(metric);
   });
 
-  section.append(header, metrics);
+  const statsCard = frameDocument.createElement('div');
+  statsCard.className = 'siase-v2-kardex-stats';
+  statsCard.append(header, metrics);
+  section.append(studentCard, statsCard);
   tableShell.before(section);
 }
 

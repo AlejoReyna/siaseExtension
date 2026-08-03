@@ -9,6 +9,7 @@ import type { StudentInfo } from '@/types/student';
 import { categorizeMenuItems, parseMenuItems } from '@/utils/parser/menu';
 import { parseKardexSummary } from '@/utils/parser/kardex';
 import { parseStudentInfo } from '@/utils/parser/student';
+import { extractSiaseSessionParams } from '@/utils/siase-session';
 import { getStorageValue, setStorageValue } from '@/utils/storage';
 import { applyStoredTheme, applyTheme, getStoredTheme } from './theme';
 
@@ -1150,12 +1151,24 @@ function abreviarNombre(nombre: string): string {
 }
 
 function replaceNexusWidget(frameDocument: Document, html: string): void {
-  frameDocument.getElementById('siase-nexus-widget')?.remove();
+  const existing = frameDocument.getElementById('siase-nexus-widget');
+  const existingParent = existing?.parentElement;
+  const existingNextSibling = existing?.nextSibling;
+  existing?.remove();
 
   const template = frameDocument.createElement('template');
   template.innerHTML = html.trim();
   const widget = template.content.firstElementChild;
   if (!widget) return;
+
+  if (existingParent) {
+    if (existingNextSibling?.parentNode === existingParent) {
+      existingParent.insertBefore(widget, existingNextSibling);
+    } else {
+      existingParent.append(widget);
+    }
+    return;
+  }
 
   const mainPanel = frameDocument.querySelector('.siase-career-main');
   if (mainPanel) {
@@ -1204,7 +1217,7 @@ function renderizarWidget(frameDocument: Document, actividades: NexusActivity[])
 
   const hoy = actividades.filter((actividad) => actividad.esHoy);
   const semana = actividades.filter((actividad) => !actividad.esHoy);
-  let html = '<section class="siase-career-section siase-nexus-widget" id="siase-nexus-widget">';
+  let html = '<section class="siase-career-section siase-v2-card siase-v2-card--nexus siase-nexus-widget" id="siase-nexus-widget">';
 
   html += '<div class="siase-career-section__header">';
   html += '<div class="siase-nexus-widget__title">';
@@ -1248,7 +1261,7 @@ function mostrarWidgetCargando(frameDocument: Document): void {
   replaceNexusWidget(
     frameDocument,
     `
-      <section class="siase-career-section siase-nexus-widget" id="siase-nexus-widget">
+      <section class="siase-career-section siase-v2-card siase-v2-card--nexus siase-nexus-widget" id="siase-nexus-widget">
         <div class="siase-career-section__header">
           <h2>Proximas a vencer</h2>
           <span>Cargando...</span>
@@ -1268,7 +1281,7 @@ function mostrarWidgetError(frameDocument: Document, mensaje: string): void {
   replaceNexusWidget(
     frameDocument,
     `
-      <section class="siase-career-section siase-nexus-widget" id="siase-nexus-widget">
+      <section class="siase-career-section siase-v2-card siase-v2-card--nexus siase-nexus-widget" id="siase-nexus-widget">
         <div class="siase-career-section__header">
           <h2>Proximas a vencer</h2>
         </div>
@@ -1690,7 +1703,7 @@ function iniciarWidgetNexusConCache(frameDocument: Document): void {
   void iniciarWidgetNexus(frameDocument);
 }
 
-function scheduleNexusWidget(frameDocument: Document): void {
+export function scheduleNexusWidget(frameDocument: Document): void {
   if (frameDocument.body.dataset.siaseNexusWidgetMounted === 'true') return;
   frameDocument.body.dataset.siaseNexusWidgetMounted = 'true';
   const frameWindow = frameDocument.defaultView ?? window;
@@ -1700,8 +1713,17 @@ function scheduleNexusWidget(frameDocument: Document): void {
   }, 300);
 }
 
-function shouldEnhanceCareerLanding(): boolean {
-  return window.name === 'center' || window.top === window;
+function shouldEnhanceCareerLanding(frameDocument: Document): boolean {
+  if (window.name !== 'center' && window.top !== window) return false;
+
+  try {
+    return (
+      /eselcarrera\.htm$/i.test(new URL(frameDocument.location.href).pathname) ||
+      Boolean(frameDocument.querySelector('form[name="SelCarrera"]'))
+    );
+  } catch {
+    return false;
+  }
 }
 
 function cleanStudentDisplayName(value: string | undefined): string {
@@ -1788,8 +1810,24 @@ async function hydrateStudentHeader(wrapper: HTMLElement, frameDocument: Documen
 
 function getCareerLinks(frameDocument: Document): HTMLAnchorElement[] {
   return Array.from(
-    frameDocument.querySelectorAll<HTMLAnchorElement>("form[name='SelCarrera'] a[href^='javascript:']")
+    frameDocument.querySelectorAll<HTMLAnchorElement>(
+      "form[name='SelCarrera'] a[data-siase-career-action], form[name='SelCarrera'] a[href^='javascript:']"
+    )
   );
+}
+
+function getCareerAction(careerLink: HTMLAnchorElement): string {
+  return careerLink.dataset.siaseCareerAction ?? careerLink.getAttribute('href') ?? '';
+}
+
+function sanitizeCareerLinks(frameDocument: Document): void {
+  getCareerLinks(frameDocument).forEach((careerLink) => {
+    const href = careerLink.getAttribute('href');
+    if (href?.toLowerCase().startsWith('javascript:')) {
+      careerLink.dataset.siaseCareerAction = href;
+      careerLink.removeAttribute('href');
+    }
+  });
 }
 
 function findCareerCount(frameDocument: Document): number {
@@ -1853,12 +1891,12 @@ function applyLegacyCareerHref(
   wrapper: HTMLElement
 ): boolean {
   const form = getCareerForm(frameDocument);
-  const href = careerLink.getAttribute('href') ?? '';
+  const href = getCareerAction(careerLink);
   if (!form || !href.toLowerCase().startsWith('javascript:')) return false;
 
   const script = href.slice('javascript:'.length);
   const assignmentPattern =
-    /(?:document(?:\.forms\[['"]SelCarrera['"]\]|\.SelCarrera)|SelCarrera)\.([A-Za-z0-9_]+)\.value\s*=\s*(['"])(.*?)\2/g;
+    /(?:(?:self\.)?document(?:\.forms\[['"]SelCarrera['"]\]|\.SelCarrera)|SelCarrera)\.([A-Za-z0-9_]+)\.value\s*=\s*(['"])(.*?)\2/g;
   let hasAssignments = false;
   let match: RegExpExecArray | null;
 
@@ -1883,8 +1921,9 @@ function selectCareerByIndex(frameDocument: Document, wrapper: HTMLElement, inde
   if (!careerLink) return false;
 
   if (applyLegacyCareerHref(frameDocument, careerLink, wrapper)) return true;
-  careerLink.click();
-  return true;
+  // Never invoke the legacy javascript: URL. CSP blocks it and the supported
+  // career links are expected to contain the form assignments handled above.
+  return false;
 }
 
 function closeCareerListModal(wrapper: HTMLElement): void {
@@ -2024,32 +2063,17 @@ function navigateCareerHome(wrapper: HTMLElement): void {
 }
 
 function captureSiaseSessionParams(rootDocument: Document): void {
-  // Extrae los query params de la URL del frame "top" (maintop.htm?HTMLUsuario=...&HTMLtrim=...&...)
-  // Todos los frames de default.htm comparten los mismos 10 params de sesión de WebSpeed.
-  const topFrame = rootDocument.querySelector<HTMLFrameElement>('frame[name="top"]');
-  const src = topFrame?.src ?? topFrame?.getAttribute('src') ?? '';
-  if (!src) return;
+  const params = extractSiaseSessionParams(rootDocument);
+  if (!params) return;
 
-  try {
-    const url = new URL(src, 'https://deimos.dgi.uanl.mx');
-    if (!url.searchParams.has('HTMLtrim')) return;
+  console.log(KARDEX_LOG, 'params de sesión SIASE capturados', {
+    HTMLUsuario: params['HTMLUsuario'],
+    HTMLtrim: params['HTMLtrim'],
+    keys: Object.keys(params),
+  });
 
-    const params: Record<string, string> = {};
-    url.searchParams.forEach((value, key) => {
-      params[key] = value;
-    });
-
-    console.log(KARDEX_LOG, 'params de sesión SIASE capturados', {
-      HTMLUsuario: params['HTMLUsuario'],
-      HTMLtrim: params['HTMLtrim'],
-      keys: Object.keys(params),
-    });
-
-    void setStorageValue('siaseSessionParams', params);
-    scheduleSiaseKeepAlive(rootDocument.defaultView ?? window);
-  } catch (err) {
-    console.warn(KARDEX_LOG, 'no se pudieron capturar params de sesión', err);
-  }
+  void setStorageValue('siaseSessionParams', params);
+  scheduleSiaseKeepAlive(rootDocument.defaultView ?? window);
 }
 
 async function pingSiaseKeepAlive(): Promise<void> {
@@ -2755,7 +2779,7 @@ function injectDashboardChrome(frameDocument: Document): void {
 const KARDEX_LOG = '[SIASE Plus Kardex]';
 
 interface CreditProgressUIData {
-  progressPercent: number;
+  progressPercent?: number;
   totalCreditsCompleted: number;
   totalCreditsRequired: number;
   average: number | undefined;
@@ -2819,7 +2843,11 @@ function updateCreditProgressUI(frameDocument: Document, data: CreditProgressUID
     delete metricPanel.dataset.kardexProgress;
     delete metricPanel.dataset.kardexAverage;
   } else {
-    metricPanel.dataset.kardexProgress = String(data.progressPercent);
+    if (data.progressPercent !== undefined && Number.isFinite(data.progressPercent)) {
+      metricPanel.dataset.kardexProgress = String(data.progressPercent);
+    } else {
+      delete metricPanel.dataset.kardexProgress;
+    }
     if (data.average !== undefined && Number.isFinite(data.average)) {
       metricPanel.dataset.kardexAverage = String(data.average);
     } else {
@@ -2847,7 +2875,10 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
   if (cached) {
     const ageMs = Date.now() - new Date(cached.capturedAt).getTime();
     const averageIsValid = cached.average === undefined || (cached.average >= 0 && cached.average <= 100);
-    const isUsable = (cached.totalCreditsCompleted > 0 || cached.average !== undefined) && averageIsValid;
+    const isUsable =
+      Boolean(cached.planName) &&
+      (cached.totalCreditsCompleted > 0 || cached.average !== undefined) &&
+      averageIsValid;
     const matchesSession = !sessionKey || !cached.sessionKey || cached.sessionKey === sessionKey;
     if (ageMs < KARDEX_CACHE_TTL && isUsable && matchesSession) {
       console.log(KARDEX_LOG, 'usando snapshot cacheado', {
@@ -2951,7 +2982,7 @@ async function fetchKardexInBackground(frameDocument: Document): Promise<void> {
 // ──────────────────────────────────────────────────────────────────────────────
 
 export function initializeCareerLanding(frameDocument: Document): void {
-  if (!shouldEnhanceCareerLanding()) return;
+  if (!shouldEnhanceCareerLanding(frameDocument)) return;
   if (isExpiredSiaseFormPage(frameDocument)) {
     console.warn(SIASE_SESSION_LOG_PREFIX, 'expired SIASE form page detected; skipping dashboard injection');
     return;
@@ -2962,6 +2993,7 @@ export function initializeCareerLanding(frameDocument: Document): void {
     'siase-plus-single-view',
     'siase-plus-career-landing'
   );
+  sanitizeCareerLinks(frameDocument);
   applyStoredTheme(frameDocument);
   classifyLegacyStructure(frameDocument);
   injectDashboardChrome(frameDocument);

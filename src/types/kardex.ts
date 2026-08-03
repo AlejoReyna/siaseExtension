@@ -12,9 +12,17 @@ export interface KardexEntry {
 
 export interface KardexSummary {
   entries: KardexEntry[];
-  totalCreditsCompleted: number;  // extraído del DIV "TOTAL...: 138 de 220"
-  totalCreditsRequired: number;   // extraído del mismo DIV (normalmente 220)
-  progressPercent: number;        // (completados / requeridos) * 100
+  /** Nombre extraído del encabezado visible del Kardex. */
+  planName?: string;
+  approvedCredits?: number;
+  totalCredits?: number;
+  approvedSubjects?: number;
+  totalSubjects?: number;
+  /** Porcentaje redondeado y limitado a 0–100; ausente si no hay totales suficientes. */
+  progressPercent?: number;
+  /** Campos legacy conservados para las vistas existentes. */
+  totalCreditsCompleted: number;
+  totalCreditsRequired: number;
   average: number | undefined;    // promedio simple de materias aprobadas
   capturedAt: string;             // ISO 8601
   sessionKey?: string;             // usuario/sesión SIASE usada para evitar snapshots cruzados
