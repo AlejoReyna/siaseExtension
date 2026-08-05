@@ -49,7 +49,9 @@ export function enhanceQueryPage(frameDocument: Document, kind: QueryPageKind): 
       period.setAttribute('aria-label', 'Periodo a consultar');
   }
 
-  const submit = form.querySelector<HTMLInputElement>('input[type="button"][value="Aceptar"]');
+  const submit = form.querySelector<HTMLInputElement | HTMLButtonElement>(
+    'input[type="button"][value="Aceptar"], button[value="Aceptar"], button.boton'
+  );
   if (submit) {
     submit.classList.add('siase-v2-query-submit');
     if (!submit.getAttribute('aria-label'))

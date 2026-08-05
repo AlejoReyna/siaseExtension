@@ -16,7 +16,67 @@ const COL = {
 // Solo el total acumulado aparece en un <DIV> al final del documento con este patrón:
 // "TOTAL..............: 138 de 220"
 const CREDIT_TOTAL_PATTERN = /TOTAL[.\s]+:\s*(\d+)\s*de\s*(\d+)/i;
+const SUBJECT_TOTAL_PATTERN =
+  /materias?(?:\s+aprobadas?)?[.\s:]+(\d+)\s+de\s+(\d+)/i;
 const AVERAGE_PATTERN = /promedio(?:\s+general)?[.\s:]*([6-9]\d|100)(?:[.,](\d{1,2}))?/i;
+
+function cleanText(value: string | null | undefined): string {
+  return (value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function extractPlanName(document: Document): string | undefined {
+  for (const row of Array.from(document.querySelectorAll<HTMLTableRowElement>('tr'))) {
+    const cells = Array.from(row.cells)
+      .map((cell) => cleanText(cell.textContent))
+      .filter(Boolean);
+    const labelIndex = cells.findIndex((value) =>
+      /^(?:plan|plan\s+de\s+estudios|modelo\s+acad[eé]mico)\s*:?\s*$/i.test(value)
+    );
+    if (labelIndex === -1) continue;
+
+    const value = cells
+      .slice(labelIndex + 1)
+      .find(
+        (candidate) =>
+          candidate.length <= 120 &&
+          !/\b(?:matr[ií]cula|promedio|total|materia)\b/i.test(candidate)
+      );
+    if (value) return value;
+  }
+
+  const headerText = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '#noof, [data-plan], [data-plan-name], table td, table th, font, b, strong, div'
+    )
+  )
+    .slice(0, 80)
+    .map((element) => cleanText(element.textContent))
+    .filter((value) => value.length >= 4 && value.length <= 120);
+
+  for (const value of headerText) {
+    const labeled = value.match(/\bplan(?:\s+de\s+estudios)?\b\s*:?\s*(.+)$/i)?.[1];
+    const candidate = cleanText(labeled);
+    if (
+      candidate &&
+      candidate.length <= 120 &&
+      !/\b(?:matr[ií]cula|promedio|total|materia)\b/i.test(candidate)
+    ) {
+      return candidate;
+    }
+  }
+
+  for (const value of headerText) {
+    const candidate = cleanText(value);
+    if (
+      /(?:modelo|plan)\b/i.test(candidate) &&
+      !/\b(?:matr[ií]cula|promedio|total|materia)\b/i.test(candidate) &&
+      !/^(?:de\s+estudios|acad[eé]mico)?$/i.test(candidate)
+    ) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
 
 function parseScore(raw: string): number | undefined {
   const trimmed = raw.trim();
@@ -59,7 +119,15 @@ export function parseKardexSummary(document: Document): KardexSummary {
   // ── 1. Extraer créditos del body (fuera de las tablas, en DIVs al final)
   const bodyText = document.body?.innerText ?? document.body?.textContent ?? '';
   const credits = extractCreditsFromBody(bodyText);
+  const subjectTotalsMatch = bodyText.match(SUBJECT_TOTAL_PATTERN);
+  const subjectTotals = subjectTotalsMatch
+    ? {
+        approved: Number(subjectTotalsMatch[1]),
+        total: Number(subjectTotalsMatch[2])
+      }
+    : undefined;
   const domAverage = extractAverageFromBody(bodyText);
+  const planName = extractPlanName(document);
 
   console.log(LOG, 'créditos extraídos del body', {
     raw: bodyText.match(/TOTAL.{0,30}/i)?.[0],
@@ -189,11 +257,27 @@ export function parseKardexSummary(document: Document): KardexSummary {
 
   // ── 4. Totales
   const totalCreditsCompleted = credits?.completed ?? 0;
-  const totalCreditsRequired = credits?.required ?? 220;
-  const progressPercent = Math.min(
-    (totalCreditsCompleted / totalCreditsRequired) * 100,
-    100
-  );
+  const totalCreditsRequired = credits?.required ?? 0;
+  const approvedSubjects =
+    subjectTotals &&
+    Number.isFinite(subjectTotals.approved) &&
+    subjectTotals.approved >= 0
+      ? subjectTotals.approved
+      : undefined;
+  const totalSubjects =
+    subjectTotals && Number.isFinite(subjectTotals.total) && subjectTotals.total > 0
+      ? subjectTotals.total
+      : undefined;
+  const rawProgress =
+    credits && credits.required > 0
+      ? (credits.completed / credits.required) * 100
+      : approvedSubjects !== undefined && totalSubjects !== undefined
+        ? (approvedSubjects / totalSubjects) * 100
+        : undefined;
+  const progressPercent =
+    rawProgress === undefined
+      ? undefined
+      : Math.max(0, Math.min(100, Math.round(rawProgress)));
 
   console.log(LOG, 'resultado final', {
     entries: entries.length,
@@ -206,6 +290,11 @@ export function parseKardexSummary(document: Document): KardexSummary {
 
   return {
     entries,
+    planName,
+    approvedCredits: credits?.completed,
+    totalCredits: credits?.required,
+    approvedSubjects,
+    totalSubjects,
     totalCreditsCompleted,
     totalCreditsRequired,
     progressPercent,

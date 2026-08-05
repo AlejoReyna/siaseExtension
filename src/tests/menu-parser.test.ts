@@ -20,4 +20,15 @@ describe('parseMenuItems', () => {
       { label: 'Prácticas Profesionales', target: '_top' }
     ]);
   });
+
+  it('ignores accordion headers that are not service links', () => {
+    document.body.innerHTML = `
+      <ul class="menu collapsible">
+        <li><a href="#">Becas</a></li>
+        <li><a target="_new" href="/bcreq01V2.htm">Solicitud de Beca</a></li>
+      </ul>
+    `;
+
+    expect(parseMenuItems(document).map(({ label }) => label)).toEqual(['Solicitud de Beca']);
+  });
 });

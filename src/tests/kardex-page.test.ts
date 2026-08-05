@@ -38,6 +38,8 @@ const summary: KardexSummary = {
   ],
   totalCreditsCompleted: 150,
   totalCreditsRequired: 220,
+  approvedCredits: 150,
+  totalCredits: 220,
   progressPercent: 68.1818181818,
   average: 87,
   capturedAt: '2026-07-16T00:00:00.000Z'

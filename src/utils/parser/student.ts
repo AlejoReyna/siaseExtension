@@ -10,14 +10,16 @@ function stripUiTokens(value: string): string {
 }
 
 function labeledValue(text: string, label: RegExp): string | undefined {
-  const lines = text
-    .split(/\n| {2,}/)
-    .map(cleanText)
-    .filter(Boolean);
-  const line = lines.find((candidate) => label.test(candidate));
-  if (!line) return undefined;
-
-  return cleanText(line.replace(label, '').replace(/^[:\-\s]+/, ''));
+  const normalized = cleanText(text);
+  const source = label.source.replace(/^\^/, '');
+  const boundary =
+    '(?=\\s+(?:alumno|nombre|carrera|programa educativo|programa|plan(?: de estudios)?|matr[ií]cula)\\b\\s*:?|$)';
+  const match = normalized.match(
+    new RegExp(`(?:^|\\s)${source}\\s*:?\\s*(.*?)${boundary}`, label.ignoreCase ? 'i' : '')
+  );
+  const capturedValue = match?.[match.length - 1];
+  const value = capturedValue ? cleanText(capturedValue) : '';
+  return value || undefined;
 }
 
 function extractName(headerText: string, bodyText: string): string {
@@ -35,12 +37,70 @@ function extractName(headerText: string, bodyText: string): string {
 }
 
 function extractMatricula(text: string, leftDocument?: Document): string {
-  const hiddenValue = leftDocument?.querySelector<HTMLInputElement>(
-    'input[name="HTMLUsuario"]'
-  )?.value;
+  const normalizeMatricula = (value: string | undefined): string => {
+    const normalized = value?.replace(/\s+/g, '').trim() ?? '';
+    return /^[a-z0-9-]{4,24}$/i.test(normalized) ? normalized : '';
+  };
+  const hiddenValue = normalizeMatricula(
+    leftDocument?.querySelector<HTMLInputElement>('input[name="HTMLUsuario"]')?.value
+  );
   if (hiddenValue) return hiddenValue;
 
-  return text.match(/matr[ií]cula\D{0,12}(\d{4,})/i)?.[1] ?? '';
+  const leftText =
+    (leftDocument?.body as HTMLElement | null)?.innerText ??
+    textContent(leftDocument?.body ?? null);
+  const visiblePattern = /\bmatr[ií]cula\b\s*:?\s*([a-z0-9-]{4,24})\b/i;
+  return normalizeMatricula(leftText.match(visiblePattern)?.[1]) ||
+    normalizeMatricula(text.match(visiblePattern)?.[1]);
+}
+
+function isInstitutionCandidate(value: string): boolean {
+  const normalized = cleanText(value);
+  return (
+    normalized.length >= 12 &&
+    normalized.length <= 120 &&
+    normalized.split(' ').length >= 3 &&
+    /^universidad\b/i.test(normalized) &&
+    !/\b(?:matr[ií]cula|plan|carrera|programa)\b/i.test(normalized)
+  );
+}
+
+function extractInstitution(topDocument: Document, text: string): string | undefined {
+  const labeled = labeledValue(text, /^instituci[oó]n\b/i);
+  if (labeled) return labeled;
+
+  const candidates = [
+    ...Array.from(
+      topDocument.querySelectorAll<HTMLElement>('[data-institution], [itemprop="affiliation"]')
+    ).map((element) => textContent(element)),
+    ...Array.from(topDocument.querySelectorAll<HTMLElement>('[title], img[alt]')).flatMap(
+      (element) => [element.getAttribute('title') ?? '', element.getAttribute('alt') ?? '']
+    ),
+    ...text.split(/\n| {2,}/)
+  ]
+    .map(cleanText)
+    .filter(Boolean);
+
+  return candidates.find(isInstitutionCandidate);
+}
+
+function extractRawProfileText(topDocument: Document): string | undefined {
+  const candidates = Array.from(
+    topDocument.querySelectorAll<HTMLElement>('tr, td, div, p, section, article')
+  )
+    .map((element) => cleanText(textContent(element)))
+    .filter(
+      (value) =>
+        /\b(?:nombre|alumno)\b\s*:/i.test(value) &&
+        /\b(?:carrera|programa)\b\s*:/i.test(value) &&
+        /\bplan(?: de estudios)?\b\s*:/i.test(value)
+    )
+    .sort((left, right) => left.length - right.length);
+
+  const raw = candidates[0];
+  return raw
+    ? cleanText(raw.replace(/\bmatr[ií]cula\b\s*:?\s*[a-z0-9-]{4,24}\b/gi, ''))
+    : undefined;
 }
 
 export function parseStudentInfo(topDocument: Document, leftDocument?: Document): StudentInfo {
@@ -51,11 +111,15 @@ export function parseStudentInfo(topDocument: Document, leftDocument?: Document)
     (topDocument.body as HTMLElement | null)?.innerText?.replace(/\r/g, '').trim() ??
     textContent(topDocument.body);
   const combinedText = `${headerText}\n${bodyText}`;
+  const rawProfileText = extractRawProfileText(topDocument);
+  const profileText = rawProfileText || combinedText;
 
   return {
-    name: extractName(headerText, bodyText),
+    name: extractName(headerText, profileText),
     matricula: extractMatricula(combinedText, leftDocument),
-    program: labeledValue(combinedText, /^(carrera|programa educativo|programa)\b/i),
-    plan: labeledValue(combinedText, /^plan( de estudios)?\b/i)
+    program: labeledValue(profileText, /^(carrera|programa educativo|programa)\b/i),
+    plan: labeledValue(profileText, /^plan( de estudios)?\b/i),
+    institution: extractInstitution(topDocument, combinedText),
+    rawProfileText
   };
 }

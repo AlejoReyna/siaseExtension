@@ -108,7 +108,7 @@ I also added a pencil icon button in the upper-right corner of this card section
 
 I reworked the left sidebar into a cleaner service navigation panel. The sidebar now uses a fixed 280px layout with institutional UANL colors, a search input, and grouped service categories.
 
-The service categories now start closed by default and only expand when clicked. I also adjusted the sidebar layout so the category buttons use consistent width and height, distributing themselves across the available sidebar height in a more balanced way.
+The service categories now load collapsed on entry and can be opened individually. Searching still expands the matching categories automatically, and I also adjusted the sidebar layout so the category buttons use consistent width and height, distributing themselves across the available sidebar height in a more balanced way.
 
 The sidebar categories are:
 

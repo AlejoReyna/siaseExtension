@@ -28,7 +28,7 @@
     {
       "matches": ["https://deimos.dgi.uanl.mx/*maintop.htm*"],
       "js": ["src/content/top-frame.ts"],
-      "css": ["src/content/styles/top.css"],
+      "css": ["src/content/styles/top.css", "src/content/styles/notifications.css"],
       "all_frames": true,
       "run_at": "document_idle"
     },
@@ -41,8 +41,8 @@
     },
     {
       "matches": ["https://deimos.dgi.uanl.mx/*maincenter.htm*"],
-      "js": ["src/content/center-frame.ts"],
-      "css": ["src/content/styles/center-v2.css"],
+      "js": ["src/content/center-frame.ts", "src/content/profile-card-patch.ts"],
+      "css": ["src/content/styles/center-v2.css", "src/content/styles/notifications.css"],
       "all_frames": true,
       "run_at": "document_idle"
     },
@@ -53,7 +53,7 @@
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/esCreditoMaterias01.htm*"
       ],
       "js": ["src/content/service-page.ts"],
-      "css": ["src/content/styles/service-pages-v2.css"],
+      "css": ["src/content/styles/service-pages-v2.css", "src/content/styles/notifications.css"],
       "all_frames": true,
       "run_at": "document_idle"
     },
@@ -79,6 +79,7 @@
       "matches": [
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/econcfs01.htm*",
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/echalm01.htm*",
+        "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/control.p*",
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/econkdx01.htm*",
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/edatal01.htm*",
         "https://deimos.dgi.uanl.mx/cgi-bin/wspd_cgi.sh/ecohoinsint01.htm*",

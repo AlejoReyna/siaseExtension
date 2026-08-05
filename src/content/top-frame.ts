@@ -1,6 +1,32 @@
 import { parseStudentInfo } from '@/utils/parser/student';
 import { getStorageValue, setStorageValue } from '@/utils/storage';
-import { collapseLegacyFrames } from './single-view-layout';
+import { enhancementsEnabled, setEnhancementsEnabled } from '@/utils/enhancements';
+import { collapseLegacyFrames, restoreLegacyFrames } from './single-view-layout';
+
+function ensureStyleComparisonToggle(frameDocument: Document, enabled: boolean): void {
+  let button = frameDocument.getElementById(
+    'siase-v2-style-comparison-toggle'
+  ) as HTMLButtonElement | null;
+  if (!button) {
+    button = frameDocument.createElement('button');
+    button.id = 'siase-v2-style-comparison-toggle';
+    button.type = 'button';
+    button.innerHTML = '<span aria-hidden="true">◐</span>';
+    button.addEventListener('click', () => {
+      const next = button?.dataset.enabled !== 'true';
+      if (button) button.disabled = true;
+      void setEnhancementsEnabled(next).then(() => window.top?.location.reload());
+    });
+    frameDocument.body.append(button);
+  }
+  button.dataset.enabled = String(enabled);
+  button.setAttribute('aria-pressed', String(!enabled));
+  button.setAttribute(
+    'aria-label',
+    enabled ? 'Comparar con la versión original de SIASE' : 'Activar estilos de Oh My SIASE'
+  );
+  button.title = enabled ? 'Ver versión original' : 'Activar Oh My SIASE';
+}
 
 function cleanLabel(anchor: HTMLAnchorElement): string {
   return (anchor.textContent ?? anchor.getAttribute('title') ?? '')
@@ -26,10 +52,6 @@ function createHeader(frameDocument: Document, studentName: string): HTMLElement
   const shell = frameDocument.createElement('header');
   shell.id = 'siase-v2-header';
   shell.innerHTML = `
-    <a class="siase-v2-brand" href="#" aria-label="Inicio de SIASE">
-      <span class="siase-v2-brand__mark">U</span>
-      <span><strong>UANL</strong><em>SIASE</em></span>
-    </a>
     <nav class="siase-v2-module-nav" aria-label="Módulos de SIASE"></nav>
     <div class="siase-v2-header-actions">
       <nav class="siase-v2-utility-nav" aria-label="Cuenta y servicios"></nav>
@@ -67,16 +89,18 @@ function createHeader(frameDocument: Document, studentName: string): HTMLElement
     utilityNav?.append(link);
   }
 
-  shell.querySelector('.siase-v2-brand')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    window.top?.location.reload();
-  });
-
   return shell;
 }
 
 export async function initializeTopFrame(frameDocument: Document): Promise<void> {
   if (window.name !== 'top') return;
+
+  const enabled = await enhancementsEnabled();
+  ensureStyleComparisonToggle(frameDocument, enabled);
+  if (!enabled) {
+    restoreLegacyFrames();
+    return;
+  }
 
   collapseLegacyFrames();
   const parsed = parseStudentInfo(frameDocument);

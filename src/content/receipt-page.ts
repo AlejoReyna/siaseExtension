@@ -147,4 +147,7 @@ export function enhanceReceiptPage(
   return kind;
 }
 
-void enhanceReceiptPage(document, new URL(location.href));
+void enhancementsEnabled().then((enabled) => {
+  if (enabled) enhanceReceiptPage(document, new URL(location.href));
+});
+import { enhancementsEnabled } from '@/utils/enhancements';

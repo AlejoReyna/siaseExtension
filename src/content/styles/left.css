@@ -1,6 +1,7 @@
-html,
+html:has(body.siase-v2-left),
 body.siase-v2-left {
   width: 100%;
+  height: 100%;
   min-height: 100%;
   margin: 0 !important;
   overflow: hidden !important;
@@ -14,5 +15,7 @@ body.siase-v2-left > :not(#siase-v2-sidebar):not(script):not(style):not(link) {
 #siase-v2-sidebar {
   display: block;
   width: 100%;
-  height: 100vh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }

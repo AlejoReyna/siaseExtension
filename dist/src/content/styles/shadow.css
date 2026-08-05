@@ -36,8 +36,9 @@ a {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
   color: #ffffff;
   background: #123b70;
   border-right: 1px solid rgba(255, 255, 255, 0.12);
@@ -45,25 +46,140 @@ a {
 
 .siase-v2-sidebar__top {
   flex: 0 0 auto;
-  padding: 16px 14px 12px;
+  padding: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  transition: padding 220ms ease;
+}
+
+.siase-v2-sidebar__top-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+  transition: gap 220ms ease;
+}
+
+.siase-v2-sidebar__brand {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  color: #ffffff;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.siase-v2-sidebar__brand:hover,
+.siase-v2-sidebar__brand:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.siase-v2-sidebar__brand-mark {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  color: #123b70;
+  background: #d6a93b;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.siase-v2-sidebar__brand-name {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1.02;
+  opacity: 1;
+  transition:
+    max-width 180ms ease,
+    opacity 140ms ease;
+}
+
+.siase-v2-sidebar__brand-name strong {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.siase-v2-sidebar__brand-name em {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.12em;
 }
 
 .siase-v2-home {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 0 0 auto;
   width: 100%;
-  padding: 10px 11px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 10px;
   color: #ffffff;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 0;
   border-radius: 10px;
   font-weight: 750;
   cursor: pointer;
+  transition:
+    flex-basis 220ms ease,
+    padding 220ms ease,
+    background-color 160ms ease;
+}
+
+.siase-v2-home--nav {
+  margin-bottom: 10px;
+}
+
+.siase-v2-home span,
+.siase-v2-sidebar__footer button span {
+  max-width: 180px;
+  overflow: hidden;
+  opacity: 1;
+  white-space: nowrap;
+  transition:
+    max-width 180ms ease,
+    opacity 140ms ease;
 }
 
 .siase-v2-home:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.siase-v2-sidebar__collapse-toggle {
+  display: grid;
+  flex: 0 0 38px;
+  place-items: center;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.76);
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    flex-basis 220ms ease,
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.siase-v2-sidebar__collapse-toggle:hover {
+  color: #ffffff;
   background: rgba(255, 255, 255, 0.16);
 }
 
@@ -71,30 +187,49 @@ a {
   position: relative;
   display: flex;
   align-items: center;
+  max-height: 50px;
   margin-top: 10px;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    max-height 180ms ease,
+    margin-top 180ms ease,
+    opacity 120ms ease;
 }
 
 .siase-v2-search > svg {
   position: absolute;
-  left: 11px;
-  color: #667085;
+  left: 14px;
+  width: 20px;
+  height: 20px;
+  color: rgba(220, 232, 245, 0.62);
   pointer-events: none;
 }
 
 .siase-v2-search input {
   width: 100%;
-  height: 40px;
-  padding: 0 12px 0 36px;
-  color: #172033;
-  background: #ffffff;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  height: 50px;
+  padding: 0 14px 0 48px;
+  color: #eef5fc;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
   outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.siase-v2-search input::placeholder {
+  color: rgba(220, 232, 245, 0.58);
 }
 
 .siase-v2-search input:focus {
-  border-color: #d6a93b;
-  box-shadow: 0 0 0 3px rgba(214, 169, 59, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(214, 169, 59, 0.2);
 }
 
 .siase-v2-sidebar__scroll {
@@ -267,6 +402,95 @@ a {
 .siase-v2-sidebar__footer button:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__top {
+  padding-right: 2px;
+  padding-left: 2px;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__top-row {
+  gap: 4px;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__brand {
+  justify-content: center;
+  gap: 0;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__brand-mark {
+  flex-basis: 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__brand-name {
+  max-width: 0;
+  opacity: 0;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-home {
+  width: 100%;
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-nav-group--favorites,
+.siase-v2-sidebar.is-collapsed .siase-v2-nav-group__count,
+.siase-v2-sidebar.is-collapsed .siase-v2-nav-group__toggle > svg {
+  display: none;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-home span,
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__footer button span {
+  max-width: 0;
+  opacity: 0;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__collapse-toggle {
+  flex-basis: 28px;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-search {
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__scroll {
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-nav-group__toggle {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-nav-group__toggle > span:first-child {
+  justify-content: center;
+  font-size: 0;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-nav-group ul {
+  display: none;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__footer {
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.siase-v2-sidebar.is-collapsed .siase-v2-sidebar__footer button {
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

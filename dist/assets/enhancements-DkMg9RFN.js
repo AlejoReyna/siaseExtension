@@ -1,0 +1,1 @@
+import{n as e,t}from"./storage-jOxuUkTc.js";async function n(){return typeof chrome>`u`||!chrome.storage?.local?!0:await t(`siaseEnhancementsEnabled`)!==!1}async function r(t){typeof chrome>`u`||!chrome.storage?.local||await e(`siaseEnhancementsEnabled`,t)}export{r as n,n as t};

@@ -1,6 +1,7 @@
 import { enhanceAcademicCreditsPage } from './pages/academic-credits-page';
 import { enhanceCareerSelectorPage } from './pages/career-selector-page';
 import { enhanceDocumentUploadPage } from './pages/document-upload-page';
+import { enhancementsEnabled } from '@/utils/enhancements';
 
 export type ServicePageKind = 'career-selector' | 'document-upload' | 'academic-credits';
 
@@ -41,4 +42,6 @@ export function enhanceServicePage(
   return kind;
 }
 
-void enhanceServicePage(document, new URL(location.href));
+void enhancementsEnabled().then((enabled) => {
+  if (enabled) enhanceServicePage(document, new URL(location.href));
+});
